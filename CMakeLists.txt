@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 cmake_minimum_required(VERSION 3.14)
 
 project(BotHello CXX)
@@ -46,3 +47,11 @@ if(BUILD_TESTS)
   include(GoogleTest)
   gtest_discover_tests(unit_tests)
 endif()
+=======
+cmake_minimum_required(VERSION 4.0)
+project(KappaZero)
+
+set(CMAKE_CXX_STANDARD 20)
+
+add_executable(KappaZero main.cpp)
+>>>>>>> 23be413 (first commit)

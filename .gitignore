@@ -34,8 +34,3 @@ Testing/
 *.log
 *.tmp
 *.swp
-<<<<<<< HEAD
-*.swo
-=======
-*.swo
->>>>>>> 23be413 (first commit)

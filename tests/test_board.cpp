@@ -1,5 +1,6 @@
 #include "../src/board.h"
 #include <gtest/gtest.h>
+#include <ostream>
 
 // Helper to create a bitmask from coordinates (row 0-7, col 0-7)
 // Assumes row 0 is top, col 0 is left (A).
@@ -134,4 +135,136 @@ TEST_F(BoardTest, StandardOpening)
     // E3 (2, 4) -> No flank. (E4 is Black, E5 is White... wait)
     // E3 (2, 4). Neighbor E4 is Black. No capture.
     EXPECT_FALSE(board.is_move_legal(BIT(2, 4)));
+}
+
+TEST_F(BoardTest, MoveFlipsDiscsHorizontal)
+{
+    // Black at A1 (0,0), White at B1 (0,1).
+    // Move at C1 (0,2).
+    uint64_t black = BIT(0, 0);
+    uint64_t white = BIT(0, 1);
+    Board board(black, white);
+
+    board.move(BIT(0, 2));
+
+    // After move, it's White's turn.
+    // So board.black_mask is White's pieces (should be 0)
+    // board.white_mask is Black's pieces (should be A1 | B1 | C1)
+
+    EXPECT_EQ(board.get_black_mask(), 0ULL);
+    EXPECT_EQ(board.get_white_mask(), BIT(0, 0) | BIT(0, 1) | BIT(0, 2));
+}
+
+TEST_F(BoardTest, MoveFlipsDiscsVertical)
+{
+    // Black at A1 (0,0), White at A2 (1,0).
+    // Move at A3 (2,0).
+    uint64_t black = BIT(0, 0);
+    uint64_t white = BIT(1, 0);
+    Board board(black, white);
+
+    board.move(BIT(2, 0));
+
+    // After move, it's White's turn.
+    // So board.black_mask is White's pieces (should be 0)
+    // board.white_mask is Black's pieces (should be A1 | A2 | A3)
+
+    EXPECT_EQ(board.get_black_mask(), 0ULL);
+    EXPECT_EQ(board.get_white_mask(), BIT(0, 0) | BIT(1, 0) | BIT(2, 0));
+}
+
+TEST_F(BoardTest, MoveFlipsDiscsDiagonal)
+{
+    // Black at A1 (0,0), White at B2 (1,1).
+    // Move at C3 (2,2).
+    uint64_t black = BIT(0, 0);
+    uint64_t white = BIT(1, 1);
+    Board board(black, white);
+
+    board.move(BIT(2, 2));
+
+    // After move, it's White's turn.
+    // So board.black_mask is White's pieces (should be 0)
+    // board.white_mask is Black's pieces (should be A1 | B2 | C3)
+
+    EXPECT_EQ(board.get_black_mask(), 0ULL);
+    EXPECT_EQ(board.get_white_mask(), BIT(0, 0) | BIT(1, 1) | BIT(2, 2));
+}
+
+TEST_F(BoardTest, MoveFlipsMultipleDirections)
+{
+    // Setup a scenario where one move flips in 3 directions (Horizontal, Vertical, Diagonal)
+    // Black pieces at: A1(0,0), C1(0,2), A3(2,0)
+    // White pieces at: A2(1,0), B2(1,1), B1(0,1)
+    // Move at C3(2,2) should flip B2 (Diagonal) -> No, wait.
+
+    // Let's construct it carefully.
+    // Center of action: B2 (1,1) - This is where we play? No, we play to flank.
+
+    // Let's play at B2 (1,1).
+    // We need Black pieces surrounding it, and White pieces in between.
+
+    // Direction West (Left): A2(1,0) is White, A1(1,-1 invalid) -> Let's shift.
+    // Play at C3 (2,2).
+    // 1. North (Up): C2(1,2) White, C1(0,2) Black. -> Flips C2.
+    // 2. West (Left): B3(2,1) White, A3(2,0) Black. -> Flips B3.
+    // 3. North-West (Diag): B2(1,1) White, A1(0,0) Black. -> Flips B2.
+
+    uint64_t black = BIT(0, 2) | BIT(2, 0) | BIT(0, 0);
+    uint64_t white = BIT(1, 2) | BIT(2, 1) | BIT(1, 1);
+
+    Board board(black, white);
+
+    // std::cout << board << std::endl;
+
+    // Verify move is legal
+    EXPECT_TRUE(board.is_move_legal(BIT(2, 2)));
+
+    board.move(BIT(2, 2));
+
+    // std::cout << board << std::endl;
+
+    // After move, it's White's turn.
+    // board.white_mask should contain all the pieces now (original black + original white + new piece)
+    // because all white pieces were flipped to black.
+
+    uint64_t expected_black_pieces = black | white | BIT(2, 2);
+
+    EXPECT_EQ(board.get_black_mask(), 0ULL);
+    EXPECT_EQ(board.get_white_mask(), expected_black_pieces);
+}
+
+TEST_F(BoardTest, StandardOpeningMove)
+{
+    // Standard Othello starting position:
+    // White: D4, E5
+    // Black: E4, D5
+    // Coordinates:
+    // D4 = (3, 3), E4 = (3, 4)
+    // D5 = (4, 3), E5 = (4, 4)
+
+    uint64_t white = BIT(3, 3) | BIT(4, 4);
+    uint64_t black = BIT(3, 4) | BIT(4, 3);
+
+    Board board(black, white);
+
+    // Black plays C4 (3, 2).
+    // This should flip D4 (3, 3) which is White.
+    // Result: D4 becomes Black.
+
+    // std::cout << board << std::endl;
+
+    board.move(BIT(3, 2));
+
+    // std::cout << board << std::endl;
+
+    // Now it's White's turn.
+    // board.black_mask is White's pieces.
+    // board.white_mask is Black's pieces.
+
+    // White pieces: E5 (4, 4) (unchanged)
+    // Black pieces: E4 (3, 4), D5 (4, 3), C4 (3, 2) (new), D4 (3, 3) (flipped)
+
+    EXPECT_EQ(board.get_black_mask(), BIT(4, 4));
+    EXPECT_EQ(board.get_white_mask(), BIT(3, 4) | BIT(4, 3) | BIT(3, 2) | BIT(3, 3));
 }

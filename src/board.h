@@ -22,12 +22,11 @@ public:
     }
 
     // parameter `move` is an integer with a single bit set to 1 that represents where the move is played.
-    // The function does not check if there is already a disc in the same position. Be careful.
-    inline void move(uint64_t move)
-    {
-        this->black_mask |= move;
-        this->flip();
-    }
+    // The function does not check if the move is legal.
+    void move(uint64_t move);
+
+    // parameter `move` is an integer with a single bit set to 1 that represents where the move is played.
+    bool is_move_legal(uint64_t move);
 
     inline void clear()
     {
@@ -35,8 +34,8 @@ public:
         this->white_mask = 0;
     }
 
-    // parameter `move` is an integer with a single bit set to 1 that represents where the move is played.
-    bool is_move_legal(uint64_t move);
+    inline uint64_t get_black_mask() const { return this->black_mask; }
+    inline uint64_t get_white_mask() const { return this->white_mask; }
 
     friend std::ostream& operator<<(std::ostream& os, Board const& board);
 

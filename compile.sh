@@ -82,7 +82,8 @@ cmake --build "$BUILD_DIR" -- -j$(nproc)
 
 if [ "$MODE" == "test" ]; then
     echo "Running tests..."
-    (cd "$BUILD_DIR" && ctest --output-on-failure)
+    # (cd "$BUILD_DIR" && ctest --output-on-failure)
+	(cd "$BUILD_DIR" && ctest --verbose)
 elif [ "$MODE" == "run" ]; then
     echo "Running application..."
     ./"$BUILD_DIR"/bothello

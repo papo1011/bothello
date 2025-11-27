@@ -252,11 +252,7 @@ TEST_F(BoardTest, StandardOpeningMove)
     // This should flip D4 (3, 3) which is White.
     // Result: D4 becomes Black.
 
-    // std::cout << board << std::endl;
-
     board.move(BIT(3, 2));
-
-    // std::cout << board << std::endl;
 
     // Now it's White's turn.
     // board.black_mask is White's pieces.
@@ -267,4 +263,62 @@ TEST_F(BoardTest, StandardOpeningMove)
 
     EXPECT_EQ(board.get_black_mask(), BIT(4, 4));
     EXPECT_EQ(board.get_white_mask(), BIT(3, 4) | BIT(4, 3) | BIT(3, 2) | BIT(3, 3));
+}
+
+TEST_F(BoardTest, ListAvailableMoves)
+{
+    // Standard Othello starting position:
+    // White: D4, E5
+    // Black: E4, D5
+    uint64_t white = BIT(3, 3) | BIT(4, 4);
+    uint64_t black = BIT(3, 4) | BIT(4, 3);
+
+    Board board(black, white);
+
+    // Legal moves for Black:
+    // D3 (2, 3), C4 (3, 2), F5 (4, 5), E6 (5, 4)
+    uint64_t expected_moves = BIT(2, 3) | BIT(3, 2) | BIT(4, 5) | BIT(5, 4);
+
+    EXPECT_EQ(board.list_available_legal_moves(), expected_moves);
+    EXPECT_TRUE(board.is_there_a_legal_move_available());
+}
+
+TEST_F(BoardTest, NoAvailableMoves)
+{
+    Board board(0, 0);
+    EXPECT_EQ(board.list_available_legal_moves(), 0ULL);
+    EXPECT_FALSE(board.is_there_a_legal_move_available());
+}
+
+TEST_F(BoardTest, Score)
+{
+    // Black: 2 pieces, White: 2 pieces
+    uint64_t black = BIT(3, 4) | BIT(4, 3);
+    uint64_t white = BIT(3, 3) | BIT(4, 4);
+    Board board(black, white);
+
+    std::pair<uint64_t, uint64_t> s = board.score();
+    EXPECT_EQ(s.first, 2ULL);
+    EXPECT_EQ(s.second, 2ULL);
+
+    // Make a move
+    // Black plays C4 (3, 2). Flips D4 (3, 3).
+    board.move(BIT(3, 2));
+
+    // Black: E4, D5, C4, D4 (4 pieces)
+    // White: E5 (1 piece)
+    s = board.score();
+    // Note: board.score() returns {black_mask count, white_mask count}
+    // But after move, masks are swapped?
+    // Board::move() calls flip().
+    // So board.black_mask is now the NEXT player (White).
+    // board.white_mask is the PREVIOUS player (Black).
+
+    // Let's check the implementation of score().
+    // return { __builtin_popcountll(black_mask), __builtin_popcountll(white_mask) };
+
+    // So s.first is current black_mask (White's pieces), s.second is current white_mask (Black's pieces).
+
+    EXPECT_EQ(s.first, 1ULL);  // White has 1 piece
+    EXPECT_EQ(s.second, 4ULL); // Black has 4 pieces
 }

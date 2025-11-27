@@ -1,7 +1,7 @@
 #include "board.h"
 #include <cstdint>
 
-bool Board::is_move_legal(uint64_t move)
+bool Board::is_move_legal(uint64_t move) const
 {
     if ((black_mask | white_mask) & move)
         return false;
@@ -120,6 +120,43 @@ void Board::move(uint64_t move)
     this->black_mask |= move | flips;
     this->white_mask &= ~flips;
     this->flip();
+}
+
+uint64_t Board::list_available_legal_moves() const
+{
+    uint64_t legal_moves = 0;
+    uint64_t empty = ~(black_mask | white_mask);
+
+    // Iterate over all empty squares
+    for (int i = 0; i < 64; ++i) {
+        uint64_t move = 1ULL << i;
+        if (empty & move) {
+            if (is_move_legal(move)) {
+                legal_moves |= move;
+            }
+        }
+    }
+    return legal_moves;
+}
+
+bool Board::is_there_a_legal_move_available() const
+{
+    uint64_t empty = ~(black_mask | white_mask);
+    
+    for (int i = 0; i < 64; ++i) {
+        uint64_t move = 1ULL << i;
+        if (empty & move) {
+            if (is_move_legal(move)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+std::pair<uint64_t, uint64_t> Board::score() const
+{
+    return { __builtin_popcountll(black_mask), __builtin_popcountll(white_mask) };
 }
 
 std::ostream& operator<<(std::ostream& os, Board const& board)

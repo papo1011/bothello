@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <ostream>
+#include <tuple>
+#include <utility>
 
 // Assuming a board is 8x8
 class Board {
@@ -26,7 +28,14 @@ public:
     void move(uint64_t move);
 
     // parameter `move` is an integer with a single bit set to 1 that represents where the move is played.
-    bool is_move_legal(uint64_t move);
+    bool is_move_legal(uint64_t move) const;
+
+    uint64_t list_available_legal_moves() const;
+
+    bool is_there_a_legal_move_available() const;
+
+    // Return { nb of black discs, nb of white discs }
+    std::pair<uint64_t, uint64_t> score() const;
 
     inline void clear()
     {

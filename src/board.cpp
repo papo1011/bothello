@@ -1,7 +1,7 @@
 #include "board.h"
 #include <cstdint>
 
-bool Board::is_move_legal(uint64_t move) const
+bool Board::is_move_legal(Move move) const
 {
     if ((black_mask | white_mask) & move)
         return false;
@@ -10,14 +10,14 @@ bool Board::is_move_legal(uint64_t move) const
     uint64_t me = black_mask;
 
     // Directions: E, W, S, N, SE, SW, NE, NW
-    int shifts[] = { 1, -1, 8, -8, 9, 7, -7, -9 };
+    int shifts[] = {1, -1, 8, -8, 9, 7, -7, -9};
 
     uint64_t notA = 0xfefefefefefefefeULL;
     uint64_t notH = 0x7f7f7f7f7f7f7f7fULL;
     uint64_t all = 0xffffffffffffffffULL;
 
     uint64_t masks[] = {
-        notH, notA, all, all,  // E, W, S, N
+        notH, notA, all,  all, // E, W, S, N
         notH, notA, notH, notA // SE, SW, NE, NW
     };
 
@@ -25,7 +25,7 @@ bool Board::is_move_legal(uint64_t move) const
         int shift = shifts[i];
         uint64_t mask = masks[i];
 
-        uint64_t cursor = move;
+        Move cursor = move;
 
         // First step
         if (!(cursor & mask))
@@ -56,21 +56,21 @@ bool Board::is_move_legal(uint64_t move) const
     return false;
 }
 
-void Board::move(uint64_t move)
+void Board::move(Move move)
 {
     uint64_t opponent = white_mask;
     uint64_t me = black_mask;
     uint64_t flips = 0;
 
     // Directions: E, W, S, N, SE, SW, NE, NW
-    int shifts[] = { 1, -1, 8, -8, 9, 7, -7, -9 };
+    int shifts[] = {1, -1, 8, -8, 9, 7, -7, -9};
 
     uint64_t notA = 0xfefefefefefefefeULL;
     uint64_t notH = 0x7f7f7f7f7f7f7f7fULL;
     uint64_t all = 0xffffffffffffffffULL;
 
     uint64_t masks[] = {
-        notH, notA, all, all,  // E, W, S, N
+        notH, notA, all,  all, // E, W, S, N
         notH, notA, notH, notA // SE, SW, NE, NW
     };
 
@@ -78,7 +78,7 @@ void Board::move(uint64_t move)
         int shift = shifts[i];
         uint64_t mask = masks[i];
 
-        uint64_t cursor = move;
+        Move cursor = move;
         uint64_t potential_flips = 0;
 
         // First step
@@ -122,14 +122,14 @@ void Board::move(uint64_t move)
     this->flip();
 }
 
-uint64_t Board::list_available_legal_moves() const
+MoveList Board::list_available_legal_moves() const
 {
     uint64_t legal_moves = 0;
     uint64_t empty = ~(black_mask | white_mask);
 
     // Iterate over all empty squares
     for (int i = 0; i < 64; ++i) {
-        uint64_t move = 1ULL << i;
+        Move move = 1ULL << i;
         if (empty & move) {
             if (is_move_legal(move)) {
                 legal_moves |= move;
@@ -142,9 +142,9 @@ uint64_t Board::list_available_legal_moves() const
 bool Board::is_there_a_legal_move_available() const
 {
     uint64_t empty = ~(black_mask | white_mask);
-    
+
     for (int i = 0; i < 64; ++i) {
-        uint64_t move = 1ULL << i;
+        Move move = 1ULL << i;
         if (empty & move) {
             if (is_move_legal(move)) {
                 return true;
@@ -154,12 +154,12 @@ bool Board::is_there_a_legal_move_available() const
     return false;
 }
 
-std::pair<uint64_t, uint64_t> Board::score() const
+std::pair<unsigned, unsigned> Board::score() const
 {
-    return { __builtin_popcountll(black_mask), __builtin_popcountll(white_mask) };
+    return {__builtin_popcountll(black_mask), __builtin_popcountll(white_mask)};
 }
 
-std::ostream& operator<<(std::ostream& os, Board const& board)
+std::ostream &operator<<(std::ostream &os, Board const &board)
 {
     os << "  A B C D E F G H\n";
     for (int row = 0; row < 8; ++row) {

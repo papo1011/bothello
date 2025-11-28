@@ -3,15 +3,17 @@ AlignEscapedNewlines: Left
 AlignTrailingComments:
     Kind: Always
     OverEmptyLines: 0
-BasedOnStyle: WebKit
+BasedOnStyle: LLVM
 BraceWrapping:
     AfterFunction: true
 BreakBeforeBraces: Custom
 BreakBeforeInheritanceComma: true
 BreakConstructorInitializers: BeforeComma
+ColumnLimit: 88
 IndentPPDirectives: AfterHash
 IndentRequiresClause: false
 InsertNewlineAtEOF: true
+IndentWidth: 4
 LineEnding: LF
 NamespaceIndentation: None
 QualifierAlignment: Right
@@ -20,16 +22,3 @@ RequiresClausePosition: WithFollowing
 RequiresExpressionIndentation: OuterScope
 SpaceAfterTemplateKeyword: false
 WrapNamespaceBodyWithEmptyLines: Always
-
----
-Language: ObjC
-BinPackParameters: false
-BraceWrapping:
-    AfterObjCDeclaration: true
-ObjCBinPackProtocolList: Never
-ObjCBlockIndentWidth: 4
-ObjCBreakBeforeNestedBlockParam: true
-ObjCSpaceAfterProperty: true
-ObjCSpaceBeforeProtocolList: true
-
-...

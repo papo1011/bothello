@@ -39,9 +39,28 @@ class Board {
 
     bool is_there_a_legal_move_available() const;
 
-    // Return { nb of black discs, nb of white discs }
-    std::pair<unsigned, unsigned> score() const;
+    bool is_win();
 
+    inline bool is_terminal()
+    {
+        // The order of the OR is important here.
+        return this->is_win() || this->is_score_draw();
+    }
+
+    // Return { nb of black discs, nb of white discs }.
+    inline std::pair<unsigned, unsigned> score() const
+    {
+        return {__builtin_popcountll(this->black_mask),
+                __builtin_popcountll(this->white_mask)};
+    }
+
+    inline bool is_score_draw() const
+    {
+        auto score = this->score();
+        return score.first == score.second;
+    }
+
+    // Resets the board to empty.
     inline void clear()
     {
         this->black_mask = 0;
@@ -54,8 +73,8 @@ class Board {
     friend std::ostream &operator<<(std::ostream &os, Board const &board);
 
   private:
-    uint64_t black_mask; // Integer used as 8x8 grids
-    uint64_t white_mask; // Integer used as 8x8 grids
+    uint64_t black_mask; // Integer used as 8x8 grids.
+    uint64_t white_mask; // Integer used as 8x8 grids.
 };
 
 std::ostream &operator<<(std::ostream &os, Board const &board);

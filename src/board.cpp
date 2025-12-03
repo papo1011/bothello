@@ -154,9 +154,19 @@ bool Board::is_there_a_legal_move_available() const
     return false;
 }
 
-std::pair<unsigned, unsigned> Board::score() const
+bool Board::is_win()
 {
-    return {__builtin_popcountll(black_mask), __builtin_popcountll(white_mask)};
+    if (!this->is_there_a_legal_move_available()) {
+        this->flip();
+        if (!this->is_there_a_legal_move_available()) {
+            auto score = this->score();
+            // We play as black but we flipped the board so we win if black < white
+            // here.
+            return score.first < score.second;
+        }
+    }
+    this->flip();
+    return false;
 }
 
 std::ostream &operator<<(std::ostream &os, Board const &board)

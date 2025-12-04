@@ -59,7 +59,12 @@ class MCTS {
     Expansion phase: create new child node and return pointer to it */
     Node *tree_policy(Node *node);
 
-    // Simulation phase: play out a random game from the given state
+    /* Simulation phase: play out a random game from the given state
+
+    return score:
+    - 1.0 for Black win
+    - 0.0 for White win
+    - 0.5 for a draw */
     double default_policy(Board state);
 
     // Backpropagation phase: update the nodes with the simulation result

@@ -94,3 +94,53 @@ void Node::update(double result)
     visits++;
     wins += result;
 }
+
+MCTS::MCTS(int iterations)
+    : iterations(iterations)
+{
+}
+
+Move MCTS::get_best_move(Board const &state)
+{
+    Node root(state);
+
+    if (root.is_terminal()) {
+        return 0;
+    }
+
+    for (int i = 0; i < iterations; ++i) {
+        Node *leaf = tree_policy(&root);
+        double result = default_policy(leaf->state);
+        backpropagate(leaf, result);
+    }
+
+    /* The best node is the child with the most visits,
+    because UCB directs search traffic toward promising paths,
+    the node with the most visits is implicitly the one
+    the algorithm has consistently evaluated as the strongest */
+    Node *best_node = nullptr;
+    int max_visits = -1;
+
+    for (auto const &child : root.children) {
+        if (child->visits > max_visits) {
+            max_visits = child->visits;
+            best_node = child.get();
+        }
+    }
+
+    return best_node ? best_node->move_from_parent : 0;
+}
+
+Node *MCTS::tree_policy(Node *node)
+{
+    while (!node->is_terminal()) {
+        if (!node->is_fully_expanded()) {
+            return node->expand();
+        } else {
+            if (node->children.empty())
+                return node;
+            node = node->best_child();
+        }
+    }
+    return node;
+}

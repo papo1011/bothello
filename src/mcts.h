@@ -53,7 +53,7 @@ class MCTS {
 
     /*  Marsenne Twister random number generator
     Used instead of rand() because avoids modulo bias */
-    std::mt19937 rng;
+    std::mt19937 shuffler{std::random_device{}()};
 
     /*  Selection phase: traverse the tree to a leaf node using UCB
     Expansion phase: create new child node and return pointer to it */

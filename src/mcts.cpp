@@ -62,11 +62,11 @@ Node *Node::best_child(double c_param) const
 
     // pick the child with the highest UCB value
     for (auto const &child : children) {
-        double ucb1 = (child->wins / child->visits) +
-                      c_param * std::sqrt(2.0 * std::log(this->visits) / child->visits);
+        double ucb = (child->wins / child->visits) +
+                     c_param * std::sqrt(2.0 * std::log(this->visits) / child->visits);
 
-        if (ucb1 > best_value) {
-            best_value = ucb1;
+        if (ucb > best_value) {
+            best_value = ucb;
             best = child.get();
         }
     }
@@ -143,4 +143,47 @@ Node *MCTS::tree_policy(Node *node)
         }
     }
     return node;
+}
+
+double MCTS::default_policy(Board state)
+{
+    Board current = state;
+    int consecutive_passes = 0;
+
+    while (consecutive_passes < 2) {
+        MoveList available = current.list_available_legal_moves();
+
+        if (available == 0) {
+            current.move(0);
+            consecutive_passes++;
+            continue;
+        }
+        consecutive_passes = 0;
+
+        std::vector<Move> moves = get_moves_as_vector(available);
+
+        std::uniform_int_distribution<> dis(0, moves.size() - 1);
+        Move random_move = moves[dis(shuffler)];
+
+        current.move(random_move);
+    }
+
+    auto score = current.score();
+    if (score.first > score.second)
+        return 1.0;
+    if (score.second > score.first)
+        return 0.0;
+    return 0.5;
+}
+
+void MCTS::backpropagate(Node *node, double result)
+{
+    while (node != nullptr) {
+        if (node->player_moved_to_create_node == 0) {
+            node->update(result);
+        } else {
+            node->update(1.0 - result);
+        }
+        node = node->parent;
+    }
 }

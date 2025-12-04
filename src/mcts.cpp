@@ -54,3 +54,43 @@ Node::Node(Board const &state, Node *parent, uint64_t move)
 bool Node::is_fully_expanded() const { return untried_moves.empty(); }
 
 bool Node::is_terminal() const { return untried_moves.empty() && children.empty(); }
+
+Node *Node::best_child(double c_param) const
+{
+    Node *best = nullptr;
+    double best_value = -std::numeric_limits<double>::infinity();
+
+    // pick the child with the highest UCB value
+    for (auto const &child : children) {
+        double ucb1 = (child->wins / child->visits) +
+                      c_param * std::sqrt(2.0 * std::log(this->visits) / child->visits);
+
+        if (ucb1 > best_value) {
+            best_value = ucb1;
+            best = child.get();
+        }
+    }
+    return best;
+}
+
+Node *Node::expand()
+{
+    uint64_t move = untried_moves.back();
+    untried_moves.pop_back();
+
+    Board next_state = state;
+    next_state.move(move);
+
+    auto child = std::make_unique<Node>(next_state, this, move);
+    Node *child_ptr = child.get();
+
+    children.push_back(std::move(child));
+
+    return child_ptr;
+}
+
+void Node::update(double result)
+{
+    visits++;
+    wins += result;
+}

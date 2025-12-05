@@ -16,15 +16,15 @@ endif()
 add_library(bothello_core
     src/board.cpp
     src/board.h
-        src/mcts.h
+    src/mcts.h
+    src/mcts.cpp
 )
 
 # Include the root directory so we can include "src/board.h"
 target_include_directories(bothello_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Main executable
-add_executable(bothello main.cpp
-        src/mcts.h)
+add_executable(bothello main.cpp)
 target_link_libraries(bothello PRIVATE bothello_core)
 
 option(BUILD_TESTS "Build tests" OFF)

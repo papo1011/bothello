@@ -171,6 +171,8 @@ bool Board::is_win()
 
 std::ostream &operator<<(std::ostream &os, Board const &board)
 {
+    MoveList legal_moves = board.list_available_legal_moves();
+
     os << "  A B C D E F G H\n";
     for (int row = 0; row < 8; ++row) {
         os << (row + 1) << " ";
@@ -179,11 +181,13 @@ std::ostream &operator<<(std::ostream &os, Board const &board)
             uint64_t mask = 1ULL << index;
 
             if (board.black_mask & mask)
-                os << "X ";
+                os << "* ";
             else if (board.white_mask & mask)
                 os << "O ";
-            else
+            else if (legal_moves & mask)
                 os << ". ";
+            else
+                os << "- ";
         }
         os << (row + 1) << "\n";
     }

@@ -3,11 +3,11 @@
 
 bool Board::is_move_legal(Move move) const
 {
-    if ((black_mask | white_mask) & move)
+    if ((curr_player_mask | opp_player_mask) & move)
         return false;
 
-    uint64_t opponent = white_mask;
-    uint64_t me = black_mask;
+    uint64_t opponent = opp_player_mask;
+    uint64_t me = curr_player_mask;
 
     // Directions: E, W, S, N, SE, SW, NE, NW
     int shifts[] = {1, -1, 8, -8, 9, 7, -7, -9};
@@ -58,8 +58,8 @@ bool Board::is_move_legal(Move move) const
 
 void Board::move(Move move)
 {
-    uint64_t opponent = white_mask;
-    uint64_t me = black_mask;
+    uint64_t opponent = opp_player_mask;
+    uint64_t me = curr_player_mask;
     uint64_t flips = 0;
 
     // Directions: E, W, S, N, SE, SW, NE, NW
@@ -117,15 +117,15 @@ void Board::move(Move move)
         }
     }
 
-    this->black_mask |= move | flips;
-    this->white_mask &= ~flips;
+    this->curr_player_mask |= move | flips;
+    this->opp_player_mask &= ~flips;
     this->flip();
 }
 
 MoveList Board::list_available_legal_moves() const
 {
     uint64_t legal_moves = 0;
-    uint64_t empty = ~(black_mask | white_mask);
+    uint64_t empty = ~(curr_player_mask | opp_player_mask);
 
     // Iterate over all empty squares
     for (int i = 0; i < 64; ++i) {
@@ -141,7 +141,7 @@ MoveList Board::list_available_legal_moves() const
 
 bool Board::is_there_a_legal_move_available() const
 {
-    uint64_t empty = ~(black_mask | white_mask);
+    uint64_t empty = ~(curr_player_mask | opp_player_mask);
 
     for (int i = 0; i < 64; ++i) {
         Move move = 1ULL << i;
@@ -182,6 +182,8 @@ std::vector<Move> get_moves_as_vector(MoveList move_list)
     return moves;
 }
 
+// Converts a single Move (bitmask with one bit) into GTP string format
+// GTP Go Text Protocol
 std::string move_to_gtp(Move move)
 {
     if (move == 0)
@@ -213,6 +215,16 @@ std::ostream &operator<<(std::ostream &os, Board const &board)
 {
     MoveList legal_moves = board.list_available_legal_moves();
 
+    uint64_t black_pieces, white_pieces;
+
+    if (board.is_black_turn) {
+        black_pieces = board.curr_player_mask;
+        white_pieces = board.opp_player_mask;
+    } else {
+        white_pieces = board.curr_player_mask;
+        black_pieces = board.opp_player_mask;
+    }
+
     os << "  A B C D E F G H\n";
     for (int row = 0; row < 8; ++row) {
         os << (row + 1) << " ";
@@ -220,12 +232,12 @@ std::ostream &operator<<(std::ostream &os, Board const &board)
             int index = row * 8 + col;
             uint64_t mask = 1ULL << index;
 
-            if (board.black_mask & mask)
+            if (black_pieces & mask)
                 os << "* ";
-            else if (board.white_mask & mask)
+            else if (white_pieces & mask)
                 os << "O ";
             else if (legal_moves & mask)
-                os << ". ";
+                os << ". "; // available move
             else
                 os << "- ";
         }

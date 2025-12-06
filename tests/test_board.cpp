@@ -4,13 +4,10 @@
 
 // Helper to create a bitmask from coordinates (row 0-7, col 0-7)
 // Assumes row 0 is top, col 0 is left (A).
-constexpr uint64_t BIT(int row, int col)
-{
-    return 1ULL << (row * 8 + col);
-}
+constexpr uint64_t BIT(int row, int col) { return 1ULL << (row * 8 + col); }
 
 class BoardTest : public ::testing::Test {
-protected:
+  protected:
     // Helper to visualize or setup if needed
 };
 
@@ -148,11 +145,11 @@ TEST_F(BoardTest, MoveFlipsDiscsHorizontal)
     board.move(BIT(0, 2));
 
     // After move, it's White's turn.
-    // So board.black_mask is White's pieces (should be 0)
-    // board.white_mask is Black's pieces (should be A1 | B1 | C1)
+    // So board.curr_player_mask is White's pieces (should be 0)
+    // board.opp_player_mask is Black's pieces (should be A1 | B1 | C1)
 
-    EXPECT_EQ(board.get_black_mask(), 0ULL);
-    EXPECT_EQ(board.get_white_mask(), BIT(0, 0) | BIT(0, 1) | BIT(0, 2));
+    EXPECT_EQ(board.get_curr_player_mask(), 0ULL);
+    EXPECT_EQ(board.get_opp_player_mask(), BIT(0, 0) | BIT(0, 1) | BIT(0, 2));
 }
 
 TEST_F(BoardTest, MoveFlipsDiscsVertical)
@@ -166,11 +163,11 @@ TEST_F(BoardTest, MoveFlipsDiscsVertical)
     board.move(BIT(2, 0));
 
     // After move, it's White's turn.
-    // So board.black_mask is White's pieces (should be 0)
-    // board.white_mask is Black's pieces (should be A1 | A2 | A3)
+    // So board.curr_player_mask is White's pieces (should be 0)
+    // board.opp_player_mask is Black's pieces (should be A1 | A2 | A3)
 
-    EXPECT_EQ(board.get_black_mask(), 0ULL);
-    EXPECT_EQ(board.get_white_mask(), BIT(0, 0) | BIT(1, 0) | BIT(2, 0));
+    EXPECT_EQ(board.get_curr_player_mask(), 0ULL);
+    EXPECT_EQ(board.get_opp_player_mask(), BIT(0, 0) | BIT(1, 0) | BIT(2, 0));
 }
 
 TEST_F(BoardTest, MoveFlipsDiscsDiagonal)
@@ -184,19 +181,18 @@ TEST_F(BoardTest, MoveFlipsDiscsDiagonal)
     board.move(BIT(2, 2));
 
     // After move, it's White's turn.
-    // So board.black_mask is White's pieces (should be 0)
-    // board.white_mask is Black's pieces (should be A1 | B2 | C3)
+    // So board.curr_player_mask is White's pieces (should be 0)
+    // board.opp_player_mask is Black's pieces (should be A1 | B2 | C3)
 
-    EXPECT_EQ(board.get_black_mask(), 0ULL);
-    EXPECT_EQ(board.get_white_mask(), BIT(0, 0) | BIT(1, 1) | BIT(2, 2));
+    EXPECT_EQ(board.get_curr_player_mask(), 0ULL);
+    EXPECT_EQ(board.get_opp_player_mask(), BIT(0, 0) | BIT(1, 1) | BIT(2, 2));
 }
 
 TEST_F(BoardTest, MoveFlipsMultipleDirections)
 {
-    // Setup a scenario where one move flips in 3 directions (Horizontal, Vertical, Diagonal)
-    // Black pieces at: A1(0,0), C1(0,2), A3(2,0)
-    // White pieces at: A2(1,0), B2(1,1), B1(0,1)
-    // Move at C3(2,2) should flip B2 (Diagonal) -> No, wait.
+    // Setup a scenario where one move flips in 3 directions (Horizontal, Vertical,
+    // Diagonal) Black pieces at: A1(0,0), C1(0,2), A3(2,0) White pieces at: A2(1,0),
+    // B2(1,1), B1(0,1) Move at C3(2,2) should flip B2 (Diagonal) -> No, wait.
 
     // Let's construct it carefully.
     // Center of action: B2 (1,1) - This is where we play? No, we play to flank.
@@ -225,13 +221,13 @@ TEST_F(BoardTest, MoveFlipsMultipleDirections)
     // std::cout << board << std::endl;
 
     // After move, it's White's turn.
-    // board.white_mask should contain all the pieces now (original black + original white + new piece)
-    // because all white pieces were flipped to black.
+    // board.opp_player_mask should contain all the pieces now (original black +
+    // original white + new piece) because all white pieces were flipped to black.
 
     uint64_t expected_black_pieces = black | white | BIT(2, 2);
 
-    EXPECT_EQ(board.get_black_mask(), 0ULL);
-    EXPECT_EQ(board.get_white_mask(), expected_black_pieces);
+    EXPECT_EQ(board.get_curr_player_mask(), 0ULL);
+    EXPECT_EQ(board.get_opp_player_mask(), expected_black_pieces);
 }
 
 TEST_F(BoardTest, StandardOpeningMove)
@@ -255,14 +251,15 @@ TEST_F(BoardTest, StandardOpeningMove)
     board.move(BIT(3, 2));
 
     // Now it's White's turn.
-    // board.black_mask is White's pieces.
-    // board.white_mask is Black's pieces.
+    // board.curr_player_mask is White's pieces.
+    // board.opp_player_mask is Black's pieces.
 
     // White pieces: E5 (4, 4) (unchanged)
     // Black pieces: E4 (3, 4), D5 (4, 3), C4 (3, 2) (new), D4 (3, 3) (flipped)
 
-    EXPECT_EQ(board.get_black_mask(), BIT(4, 4));
-    EXPECT_EQ(board.get_white_mask(), BIT(3, 4) | BIT(4, 3) | BIT(3, 2) | BIT(3, 3));
+    EXPECT_EQ(board.get_curr_player_mask(), BIT(4, 4));
+    EXPECT_EQ(board.get_opp_player_mask(),
+              BIT(3, 4) | BIT(4, 3) | BIT(3, 2) | BIT(3, 3));
 }
 
 TEST_F(BoardTest, ListAvailableMoves)
@@ -308,16 +305,19 @@ TEST_F(BoardTest, Score)
     // Black: E4, D5, C4, D4 (4 pieces)
     // White: E5 (1 piece)
     s = board.score();
-    // Note: board.score() returns {black_mask count, white_mask count}
+    // Note: board.score() returns {curr_player_mask count, opp_player_mask count}
     // But after move, masks are swapped?
     // Board::move() calls flip().
-    // So board.black_mask is now the NEXT player (White).
-    // board.white_mask is the PREVIOUS player (Black).
+    // So board.curr_player_mask is now the NEXT player (White).
+    // board.opp_player_mask is the PREVIOUS player (Black).
 
     // Let's check the implementation of score().
-    // return { __builtin_popcountll(black_mask), __builtin_popcountll(white_mask) };
+    // return { __builtin_popcountll(curr_player_mask),
+    // __builtin_popcountll(opp_player_mask)
+    // };
 
-    // So s.first is current black_mask (White's pieces), s.second is current white_mask (Black's pieces).
+    // So s.first is current curr_player_mask (White's pieces), s.second is current
+    // opp_player_mask (Black's pieces).
 
     EXPECT_EQ(s.first, 1ULL);  // White has 1 piece
     EXPECT_EQ(s.second, 4ULL); // Black has 4 pieces

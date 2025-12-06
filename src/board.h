@@ -9,23 +9,27 @@
 typedef uint64_t Move;
 typedef uint64_t MoveList;
 
-// Assuming a board is 8x8
+// 8x8 board represented as two 64-bit masks
 class Board {
   public:
-    Board(uint64_t black_mask = 0, uint64_t white_mask = 0)
-        : black_mask(black_mask)
-        , white_mask(white_mask)
+    Board(uint64_t curr_player_mask = 0, uint64_t opp_player_mask = 0,
+          bool is_black_turn = true)
+        : curr_player_mask(curr_player_mask)
+        , opp_player_mask(opp_player_mask)
+        , is_black_turn(is_black_turn)
     {
     }
 
-    // Flips the board each turn (ie swaps black_mask and white_mask)
+    // Flips the board each turn (ie swaps curr_player_mask and opp_player_mask)
     // Standard way of swapping two variables (faster than bitwise) if not optimised.
     // Use gcc -O2 or -O3 to fully optimise it.
     inline void flip()
     {
-        uint64_t temp = this->black_mask;
-        this->black_mask = this->white_mask;
-        this->white_mask = temp;
+        uint64_t temp = this->curr_player_mask;
+        this->curr_player_mask = this->opp_player_mask;
+        this->opp_player_mask = temp;
+
+        this->is_black_turn = !this->is_black_turn;
     }
 
     // parameter `move` is an integer with a single bit set to 1 that represents where
@@ -51,8 +55,8 @@ class Board {
     // Return { nb of black discs, nb of white discs }.
     inline std::pair<unsigned, unsigned> score() const
     {
-        return {__builtin_popcountll(this->black_mask),
-                __builtin_popcountll(this->white_mask)};
+        return {__builtin_popcountll(this->curr_player_mask),
+                __builtin_popcountll(this->opp_player_mask)};
     }
 
     inline bool is_score_draw() const
@@ -64,18 +68,19 @@ class Board {
     // Resets the board to empty.
     inline void clear()
     {
-        this->black_mask = 0;
-        this->white_mask = 0;
+        this->curr_player_mask = 0;
+        this->opp_player_mask = 0;
     }
 
-    inline uint64_t get_black_mask() const { return this->black_mask; }
-    inline uint64_t get_white_mask() const { return this->white_mask; }
+    inline uint64_t get_curr_player_mask() const { return this->curr_player_mask; }
+    inline uint64_t get_opp_player_mask() const { return this->opp_player_mask; }
 
     friend std::ostream &operator<<(std::ostream &os, Board const &board);
 
   private:
-    uint64_t black_mask; // Integer used as 8x8 grids.
-    uint64_t white_mask; // Integer used as 8x8 grids.
+    uint64_t curr_player_mask; // Integer used as 8x8 grids.
+    uint64_t opp_player_mask;  // Integer used as 8x8 grids.
+    bool is_black_turn;
 };
 
 std::vector<Move> get_moves_as_vector(MoveList move_list);

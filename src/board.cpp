@@ -169,6 +169,19 @@ bool Board::is_win()
     return false;
 }
 
+// Converts the bitmask MoveList (uint64_t) into a generic vector of moves
+std::vector<Move> get_moves_as_vector(MoveList move_list)
+{
+    std::vector<Move> moves;
+    for (int i = 0; i < 64; ++i) {
+        Move m = 1ULL << i;
+        if (move_list & m) {
+            moves.push_back(m);
+        }
+    }
+    return moves;
+}
+
 std::string move_to_gtp(Move move)
 {
     if (move == 0)

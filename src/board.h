@@ -4,6 +4,7 @@
 #include <ostream>
 #include <tuple>
 #include <utility>
+#include <vector>
 
 typedef uint64_t Move;
 typedef uint64_t MoveList;
@@ -77,5 +78,6 @@ class Board {
     uint64_t white_mask; // Integer used as 8x8 grids.
 };
 
+std::vector<Move> get_moves_as_vector(MoveList move_list);
 std::string move_to_gtp(Move move);
 std::ostream &operator<<(std::ostream &os, Board const &board);

@@ -3,7 +3,6 @@
 #include "board.h"
 #include <memory>
 #include <random>
-#include <vector>
 
 // Monte-Carlo Tree Search Node structure
 struct Node {

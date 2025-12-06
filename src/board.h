@@ -77,4 +77,5 @@ class Board {
     uint64_t white_mask; // Integer used as 8x8 grids.
 };
 
+std::string move_to_gtp(Move move);
 std::ostream &operator<<(std::ostream &os, Board const &board);

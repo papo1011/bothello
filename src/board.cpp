@@ -169,6 +169,33 @@ bool Board::is_win()
     return false;
 }
 
+std::string move_to_gtp(Move move)
+{
+    if (move == 0)
+        return "pass";
+
+    int idx = -1;
+    for (int i = 0; i < 64; ++i) {
+        if (move & (1ULL << i)) {
+            idx = i;
+            break;
+        }
+    }
+    if (idx == -1)
+        return "invalid";
+
+    int row = idx / 8; // 0..7
+    int col = idx % 8; // 0..7
+
+    char col_char = 'a' + col; // a..h
+    char row_char = '1' + row; // 1..8
+
+    std::string res;
+    res += col_char;
+    res += row_char;
+    return res;
+}
+
 std::ostream &operator<<(std::ostream &os, Board const &board)
 {
     MoveList legal_moves = board.list_available_legal_moves();

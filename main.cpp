@@ -23,7 +23,7 @@ int main()
 
     Move best_move = mcts.get_best_move(board);
 
-    std::cout << "MCTS selected move: " << best_move << std::endl;
+    std::cout << "MCTS selected move: " << move_to_gtp(best_move) << std::endl;
 
     board.move(best_move);
 
@@ -32,13 +32,13 @@ int main()
 
     best_move = mcts.get_best_move(board);
 
-    std::cout << "MCTS selected move: " << best_move << std::endl;
+    std::cout << "MCTS selected move: " << move_to_gtp(best_move) << std::endl;
     board.move(best_move);
     std::cout << "Board after move:\n" << board << std::endl;
 
     best_move = mcts.get_best_move(board);
 
-    std::cout << "MCTS selected move: " << best_move << std::endl;
+    std::cout << "MCTS selected move: " << move_to_gtp(best_move) << std::endl;
     board.move(best_move);
     std::cout << "Board after move:\n" << board << std::endl;
     return 0;

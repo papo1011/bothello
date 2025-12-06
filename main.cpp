@@ -19,7 +19,7 @@ int main()
 
     std::cout << "Initial board:\n" << board << std::endl;
 
-    MCTS mcts(1000);
+    MCTS mcts(std::chrono::milliseconds(10000));
 
     Move best_move = mcts.get_best_move(board);
 

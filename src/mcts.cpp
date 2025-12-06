@@ -83,7 +83,16 @@ void Node::update(double result)
 }
 
 MCTS::MCTS(int iterations)
-    : iterations(iterations)
+    : mode(MCTSStopMode::Iterations)
+    , iterations(iterations)
+    , time_limit(0)
+{
+}
+
+MCTS::MCTS(std::chrono::milliseconds time_limit)
+    : mode(MCTSStopMode::Time)
+    , iterations(0)
+    , time_limit(time_limit)
 {
 }
 
@@ -91,14 +100,29 @@ Move MCTS::get_best_move(Board const &state)
 {
     Node root(state);
 
-    if (root.is_terminal()) {
-        return 0;
-    }
+    if (mode == MCTSStopMode::Iterations) {
+        for (int i = 0; i < iterations; ++i) {
+            Node *node = tree_policy(&root);
+            double result = default_policy(node->state);
+            backpropagate(node, result);
+        }
+    } else { // mode == Time
+        using clock = std::chrono::steady_clock;
+        auto start = clock::now();
 
-    for (int i = 0; i < iterations; ++i) {
-        Node *leaf = tree_policy(&root);
-        double result = default_policy(leaf->state);
-        backpropagate(leaf, result);
+        int it = 0;
+        while (true) {
+            auto now = clock::now();
+            auto elapsed =
+                std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
+            if (elapsed >= time_limit)
+                break;
+
+            Node *node = tree_policy(&root);
+            double result = default_policy(node->state);
+            backpropagate(node, result);
+            ++it;
+        }
     }
 
     /* The best node is the child with the most visits,

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "board.h"
+#include <chrono>
 #include <memory>
 #include <random>
 
@@ -41,14 +42,21 @@ struct Node {
     void update(double result);
 };
 
+enum class MCTSStopMode { Iterations, Time };
+
 class MCTS {
   public:
     MCTS(int iterations);
+    MCTS(std::chrono::milliseconds time_limit);
 
     Move get_best_move(Board const &state);
 
   private:
+    MCTSStopMode mode;
+
     int iterations;
+
+    std::chrono::milliseconds time_limit;
 
     /*  Marsenne Twister random number generator
     Used instead of rand() because avoids modulo bias */

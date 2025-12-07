@@ -42,8 +42,6 @@ struct Node {
     void update(double result);
 };
 
-enum class MCTSStopMode { Iterations, Time };
-
 class MCTS {
   public:
     MCTS(int iterations);
@@ -51,27 +49,31 @@ class MCTS {
 
     Move get_best_move(Board const &state);
 
+    // Returns Playout Per Second of the last MCTS search
+    // number of simulations divided by time taken
+    double get_pps() const;
+
   private:
-    MCTSStopMode mode;
-
     int iterations;
-
     std::chrono::milliseconds time_limit;
 
-    /*  Marsenne Twister random number generator
-    Used instead of rand() because avoids modulo bias */
+    int last_executed_iterations = 0;
+    double last_duration_seconds = 0.0;
+
+    // Marsenne Twister random number generator,
+    // used instead of rand() because avoids modulo bias */
     std::mt19937 shuffler{std::random_device{}()};
 
-    /*  Selection phase: traverse the tree to a leaf node using UCB
-    Expansion phase: create new child node and return pointer to it */
+    // Selection phase: traverse the tree to a leaf node using UCB
+    // Expansion phase: create new child node and return pointer to it
     Node *tree_policy(Node *node);
 
-    /* Simulation phase: play out a random game from the given state
-
-    return score:
-    - 1.0 for Black win
-    - 0.0 for White win
-    - 0.5 for a draw */
+    // Simulation phase: play out a random game from the given state
+    //
+    // Return score:
+    // - 1.0 for Black win
+    // - 0.0 for White win
+    // - 0.5 for a draw
     double default_policy(Board state);
 
     // Backpropagation phase: update the nodes with the simulation result

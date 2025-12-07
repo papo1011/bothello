@@ -46,23 +46,13 @@ class Board {
 
     bool is_win();
 
-    inline bool is_terminal()
-    {
-        // The order of the OR is important here.
-        return this->is_win() || this->is_score_draw();
-    }
+    bool is_terminal();
 
     // Return { nb of black discs, nb of white discs }.
     inline std::pair<unsigned, unsigned> score() const
     {
         return {__builtin_popcountll(this->curr_player_mask),
                 __builtin_popcountll(this->opp_player_mask)};
-    }
-
-    inline bool is_score_draw() const
-    {
-        auto score = this->score();
-        return score.first == score.second;
     }
 
     // Resets the board to empty.

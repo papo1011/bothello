@@ -161,12 +161,24 @@ bool Board::is_win()
         if (!this->is_there_a_legal_move_available()) {
             auto score = this->score();
             // We play as black but we flipped the board so we win if black < white
-            // here.
             return score.first < score.second;
         }
     }
     this->flip();
     return false;
+}
+
+bool Board::is_terminal()
+{
+    if (this->is_there_a_legal_move_available())
+        return false;
+
+    this->flip();
+    bool opp_has_move = this->is_there_a_legal_move_available();
+    this->flip();
+
+    if (!opp_has_move)
+        return true;
 }
 
 // Converts the bitmask MoveList (uint64_t) into a generic vector of moves

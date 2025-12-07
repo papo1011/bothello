@@ -1,5 +1,6 @@
 #include "mcts.h"
 #include <algorithm>
+#include <limits>
 #include <random>
 
 Node::Node(Board const &state, Node *parent, uint64_t move)
@@ -22,9 +23,9 @@ Node::Node(Board const &state, Node *parent, uint64_t move)
         }
     }
 
-    /* Multi-threading random engine
-    used to ensure exploration diversity of the available moves,
-    instead of always expanding in the same order */
+    // Multi-threading random engine
+    // used to ensure exploration diversity of the available moves,
+    // instead of always expanding in the same order
     static thread_local std::mt19937 shuffler{std::random_device{}()};
     std::shuffle(untried_moves.begin(), untried_moves.end(), shuffler);
 
@@ -83,15 +84,13 @@ void Node::update(double result)
 }
 
 MCTS::MCTS(int iterations)
-    : mode(MCTSStopMode::Iterations)
-    , iterations(iterations)
-    , time_limit(0)
+    : iterations(iterations)
+    , time_limit(std::chrono::milliseconds::max())
 {
 }
 
 MCTS::MCTS(std::chrono::milliseconds time_limit)
-    : mode(MCTSStopMode::Time)
-    , iterations(0)
+    : iterations(std::numeric_limits<int>::max())
     , time_limit(time_limit)
 {
 }
@@ -100,35 +99,33 @@ Move MCTS::get_best_move(Board const &state)
 {
     Node root(state);
 
-    if (mode == MCTSStopMode::Iterations) {
-        for (int i = 0; i < iterations; ++i) {
-            Node *node = tree_policy(&root);
-            double result = default_policy(node->state);
-            backpropagate(node, result);
-        }
-    } else { // mode == Time
-        using clock = std::chrono::steady_clock;
-        auto start = clock::now();
+    last_executed_iterations = 0;
+    last_duration_seconds = 0.0;
 
-        int it = 0;
-        while (true) {
-            auto now = clock::now();
-            auto elapsed =
-                std::chrono::duration_cast<std::chrono::milliseconds>(now - start);
-            if (elapsed >= time_limit)
-                break;
+    using clock = std::chrono::steady_clock;
+    auto start_time = clock::now();
 
-            Node *node = tree_policy(&root);
-            double result = default_policy(node->state);
-            backpropagate(node, result);
-            ++it;
+    while (last_executed_iterations < iterations) {
+        auto current_now = clock::now();
+        if ((current_now - start_time) >= time_limit) {
+            break;
         }
+
+        Node *node = tree_policy(&root);
+        double result = default_policy(node->state);
+        backpropagate(node, result);
+
+        last_executed_iterations++;
     }
 
-    /* The best node is the child with the most visits,
-    because UCB directs search traffic toward promising paths,
-    the node with the most visits is implicitly the one
-    the algorithm has consistently evaluated as the strongest */
+    auto end_time = clock::now();
+    std::chrono::duration<double> elapsed = end_time - start_time;
+    last_duration_seconds = elapsed.count();
+
+    // The best node is the child with the most visits,
+    // because UCB directs search traffic toward promising paths,
+    // the node with the most visits is implicitly the one
+    // the algorithm has consistently evaluated as the strongest
     Node *best_node = nullptr;
     int max_visits = -1;
 
@@ -140,6 +137,14 @@ Move MCTS::get_best_move(Board const &state)
     }
 
     return best_node ? best_node->move_from_parent : 0;
+}
+
+double MCTS::get_pps() const
+{
+    if (last_duration_seconds > 0.0) {
+        return last_executed_iterations / last_duration_seconds;
+    }
+    return 0.0;
 }
 
 Node *MCTS::tree_policy(Node *node)

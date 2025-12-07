@@ -9,9 +9,6 @@ constexpr uint64_t BIT(int row, int col) { return 1ULL << (row * 8 + col); }
 
 int main()
 {
-    // Standard Othello starting position:
-    // White: D4 (3,3) and E5 (4,4)
-    // Black: E4 (3,4) and D5 (4,3)
     uint64_t white = BIT(3, 3) | BIT(4, 4);
     uint64_t black = BIT(3, 4) | BIT(4, 3);
 
@@ -19,27 +16,55 @@ int main()
 
     std::cout << "Initial board:\n" << board << std::endl;
 
-    MCTS mcts(std::chrono::milliseconds(10000));
+    MCTS mcts(std::chrono::milliseconds(10 * 1000));
 
-    Move best_move = mcts.get_best_move(board);
+    int const max_moves = 100;
+    double sum_pps = 0.0;
+    int moves_played = 0;
 
-    std::cout << "MCTS selected move: " << move_to_gtp(best_move) << std::endl;
+    for (int i = 0; i < max_moves; i++) {
+        if (board.is_terminal())
+            break;
 
-    board.move(best_move);
+        Move best_move = mcts.get_best_move(board);
 
-    // Just to print the correct symbols after one move.
-    std::cout << "Board after move:\n" << board << std::endl;
+        double pps = mcts.get_pps();
+        sum_pps += pps;
+        moves_played++;
 
-    best_move = mcts.get_best_move(board);
+        std::cout << "Move " << (i + 1) << ": ";
+        if (i % 2 == 0)
+            std::cout << "MCTS is playing Black *" << std::endl;
+        else
+            std::cout << "MCTS is playing White O" << std::endl;
+        std::cout << "MCTS selected move: " << move_to_gtp(best_move) << std::endl;
+        if (best_move == 0) {
+            std::cout << "Player passes." << std::endl;
+        }
+        std::cout << "Playouts per second: " << pps << std::endl;
 
-    std::cout << "MCTS selected move: " << move_to_gtp(best_move) << std::endl;
-    board.move(best_move);
-    std::cout << "Board after move:\n" << board << std::endl;
+        board.move(best_move);
 
-    best_move = mcts.get_best_move(board);
+        std::cout << "Board after move:\n" << board << std::endl;
+    }
 
-    std::cout << "MCTS selected move: " << move_to_gtp(best_move) << std::endl;
-    board.move(best_move);
-    std::cout << "Board after move:\n" << board << std::endl;
+    if (moves_played > 0) {
+        double avg_pps = sum_pps / moves_played;
+        std::cout << "Average playouts per second over " << moves_played
+                  << " moves: " << avg_pps << std::endl;
+    }
+
+    auto [black_score, white_score] = board.score();
+    std::cout << "Final score - Black: " << black_score << "  White: " << white_score
+              << std::endl;
+
+    if (black_score > white_score) {
+        std::cout << "Winner: Black" << std::endl;
+    } else if (white_score > black_score) {
+        std::cout << "Winner: White" << std::endl;
+    } else {
+        std::cout << "Result: Draw" << std::endl;
+    }
+
     return 0;
 }

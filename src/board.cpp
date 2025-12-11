@@ -179,6 +179,7 @@ bool Board::is_terminal()
 
     if (!opp_has_move)
         return true;
+    return false;
 }
 
 // Converts the bitmask MoveList (uint64_t) into a generic vector of moves

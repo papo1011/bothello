@@ -16,20 +16,6 @@ compile_commands.json
 CTestTestfile.cmake
 Testing/
 
-# --- Binary outputs ---
-*.o
-*.obj
-*.lo
-*.la
-*.a
-*.lib
-*.so
-*.dylib
-*.dll
-*.exe
-*.out
-*.app
-
 # --- Logs / misc ---
 *.log
 *.tmp

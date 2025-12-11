@@ -19,8 +19,11 @@ int main()
     MCTS mcts(std::chrono::milliseconds(10 * 1000));
 
     int const max_moves = 100;
-    double sum_pps = 0.0;
     int moves_played = 0;
+
+    double pps_move1 = -1.0;
+    double pps_move30 = -1.0;
+    double pps_move55 = -1.0;
 
     for (int i = 0; i < max_moves; i++) {
         if (board.is_terminal())
@@ -29,14 +32,21 @@ int main()
         Move best_move = mcts.get_best_move(board);
 
         double pps = mcts.get_pps();
-        sum_pps += pps;
         moves_played++;
 
-        std::cout << "Move " << (i + 1) << ": ";
-        if (i % 2 == 0)
+        if (moves_played == 1)
+            pps_move1 = pps;
+        else if (moves_played == 30)
+            pps_move30 = pps;
+        else if (moves_played == 55)
+            pps_move55 = pps;
+
+        std::cout << "Move " << moves_played << ": ";
+        if (moves_played % 2 == 1)
             std::cout << "MCTS is playing Black *" << std::endl;
         else
             std::cout << "MCTS is playing White O" << std::endl;
+
         std::cout << "MCTS selected move: " << move_to_gtp(best_move) << std::endl;
         if (best_move == 0) {
             std::cout << "Player passes." << std::endl;
@@ -48,11 +58,12 @@ int main()
         std::cout << "Board after move:\n" << board << std::endl;
     }
 
-    if (moves_played > 0) {
-        double avg_pps = sum_pps / moves_played;
-        std::cout << "Average playouts per second over " << moves_played
-                  << " moves: " << avg_pps << std::endl;
-    }
+    if (pps_move1 >= 0.0)
+        std::cout << "PPS at move 1: " << pps_move1 << std::endl;
+    if (pps_move30 >= 0.0)
+        std::cout << "PPS at move 30: " << pps_move30 << std::endl;
+    if (pps_move55 >= 0.0)
+        std::cout << "PPS at move 55: " << pps_move55 << std::endl;
 
     auto [black_score, white_score] = board.score();
     std::cout << "Final score - Black: " << black_score << "  White: " << white_score

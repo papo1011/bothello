@@ -1,9 +1,18 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(BotHello CXX)
+project(BotHello CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CUDA_STANDARD 17)
+
+# Set CUDA architecture for RTX 5060 Laptop
+# Using compute_89 (Ada Lovelace) for backward compatibility with CUDA 12.0 compiler
+# RTX 5060 (Blackwell) is backward compatible and will work fine
+set(CMAKE_CUDA_ARCHITECTURES 89)
+
+# Set CMake policy for CUDA architectures
+cmake_policy(SET CMP0104 NEW)
 
 # Default to Release if not specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -26,6 +35,22 @@ target_include_directories(bothello_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 # Main executable
 add_executable(bothello main.cpp)
 target_link_libraries(bothello PRIVATE bothello_core)
+
+# Versus executable
+add_executable(bothello_versus
+    versus.cpp
+    src_gpu/parallel_mcts.cu
+)
+target_link_libraries(bothello_versus PRIVATE bothello_core)
+set_target_properties(bothello_versus PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
+# Play executable (Human vs GPU)
+add_executable(bothello_play
+    play.cpp
+    src_gpu/parallel_mcts.cu
+)
+target_link_libraries(bothello_play PRIVATE bothello_core)
+set_target_properties(bothello_play PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 option(BUILD_TESTS "Build tests" OFF)
 

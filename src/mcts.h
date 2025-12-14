@@ -33,13 +33,16 @@ struct Node {
     bool is_terminal() const;
 
     // Selects the best child using the UCB formula
-    Node *best_child(double c_param = 1.414) const;
+    virtual Node *best_child(double c_param = 1.414) const;
 
     // Expands the tree by adding a new child node
-    Node *expand();
+    virtual Node *expand();
 
     // Updates the stats for this node
     void update(double result);
+
+    // Virtual destructor to ensure correct destruction of derived types
+    virtual ~Node() = default;
 };
 
 class MCTS {
@@ -53,7 +56,7 @@ class MCTS {
     // number of simulations divided by time taken
     double get_pps() const;
 
-  private:
+  protected:
     int iterations;
     std::chrono::milliseconds time_limit;
 

@@ -44,14 +44,6 @@ add_executable(bothello_versus
 target_link_libraries(bothello_versus PRIVATE bothello_core)
 set_target_properties(bothello_versus PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
-# Play executable (Human vs GPU)
-add_executable(bothello_play
-    play.cpp
-    src_gpu/parallel_mcts.cu
-)
-target_link_libraries(bothello_play PRIVATE bothello_core)
-set_target_properties(bothello_play PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-
 option(BUILD_TESTS "Build tests" OFF)
 
 if(BUILD_TESTS)

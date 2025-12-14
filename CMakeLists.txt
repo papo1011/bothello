@@ -28,14 +28,23 @@ add_library(bothello_core
     src/mcts.h
     src/mcts.cpp
 	src/mcts_leaf_parallel.cu
+	src/mcts_tree_openmp.h
+	src/mcts_tree_openmp.cpp
 )
 
 # Include the root directory so we can include "src/board.h"
 target_include_directories(bothello_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+find_package(OpenMP REQUIRED)
+target_link_libraries(bothello_core PUBLIC OpenMP::OpenMP_CXX)
+
 # Main executable
 add_executable(bothello main.cpp)
 target_link_libraries(bothello PRIVATE bothello_core)
+
+# Benchmark executable
+add_executable(benchmark src/benchmark.cpp)
+target_link_libraries(benchmark PRIVATE bothello_core)
 
 option(BUILD_TESTS "Build tests" OFF)
 

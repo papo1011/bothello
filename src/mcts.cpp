@@ -28,6 +28,10 @@ Node::Node(Board const &state, Node *parent, uint64_t move)
         fully_expanded = true;
     }
 
+    if (untried_moves.empty()) {
+        fully_expanded = true;
+    }
+
     // Multi-threading random engine
     // used to ensure exploration diversity of the available moves,
     // instead of always expanding in the same order

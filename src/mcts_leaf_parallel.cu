@@ -1,5 +1,6 @@
-#include "parallel_mcts.h"
+#include "mcts_leaf_parallel.h"
 #include "gpu_config.h"
+#include "board.h"
 #include <curand_kernel.h>
 #include <iostream>
 #include <limits>
@@ -16,7 +17,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 }
 
 // =========================================================================================
-// CUDA KERNELS
+// CUDA KERNELS FOR LEAF-PARALLEL MCTS
 // =========================================================================================
 
 __global__ void setup_kernel(curandState *state, unsigned long seed, int n)
@@ -27,7 +28,9 @@ __global__ void setup_kernel(curandState *state, unsigned long seed, int n)
     }
 }
 
-__device__ int simulate_game(gpu::DeviceBoard state, curandState* localState) {
+// Simulates a random playout from the given board state
+// Returns 1 if Black wins, 0 if White wins or draw
+__device__ int simulate_game_from_leaf(gpu::DeviceBoard state, curandState* localState) {
     int consecutive_passes = 0;
     while (consecutive_passes < 2) {
         gpu::MoveList available = state.list_available_legal_moves();
@@ -41,8 +44,6 @@ __device__ int simulate_game(gpu::DeviceBoard state, curandState* localState) {
 
         // Pick random move
         int n_moves = gpu::DeviceBoard::count_moves(available);
-        // Generate random index in [0, n_moves-1]
-        // curand() returns a random unsigned int, modulo gives uniform distribution
         unsigned int r = curand(localState);
         int idx = r % n_moves;
         
@@ -52,10 +53,6 @@ __device__ int simulate_game(gpu::DeviceBoard state, curandState* localState) {
     
     // Game over - determine winner
     // Return 1 if Black wins, 0 if White wins or draw
-    // This is consistent with MCTS expectation: 1.0 = Black win, 0.0 = White win
-    // Note: Draws are treated as White wins (0) for simplicity with integer atomics
-    // Using floats would allow 0.5 for draws, but atomicAdd on floats is slower
-    
     int my_score, opp_score;
     state.get_score(my_score, opp_score);
     
@@ -66,37 +63,37 @@ __device__ int simulate_game(gpu::DeviceBoard state, curandState* localState) {
     return 0; // White win or draw
 }
 
-__global__ void playout_kernel(gpu::DeviceBoard initial_state, int n_sims, int* results, curandState *globalStates)
+// Kernel that launches n_sims parallel playouts from a leaf node state
+// Each thread simulates one complete game and accumulates Black wins
+__global__ void leaf_playout_kernel(gpu::DeviceBoard leaf_state, int n_sims, int* results, curandState *globalStates)
 {
     int id = blockIdx.x * blockDim.x + threadIdx.x;
     if (id < n_sims) {
-        // Copy state to local memory (registers)
+        // Copy RNG state to local memory
         curandState localState = globalStates[id];
         
-        int result = simulate_game(initial_state, &localState);
+        int result = simulate_game_from_leaf(leaf_state, &localState);
         
-        // Save state back if we want continuity (not strictly needed for independent sims but good practice)
+        // Save state back for continuity
         globalStates[id] = localState;
         
-        // Accumulate result
+        // Accumulate Black wins atomically
         atomicAdd(results, result);
     }
 }
 
-
-
 // =========================================================================================
-// Implementation
+// LeafParallelMCTS Implementation
 // =========================================================================================
 
-ParallelMCTS::ParallelMCTS(int iterations, SimulationBackend backend)
+LeafParallelMCTS::LeafParallelMCTS(int iterations, SimulationBackend backend)
     : iterations(iterations), time_limit(std::chrono::milliseconds::max()), use_time_limit(false), backend(backend)
 {
     // Allocate RNG states
     int max_sims = gpu_config::MAX_SIMULATIONS_BUFFER;
     GPU_CHECK(cudaMalloc((void**)&rng_states, max_sims * sizeof(curandState)));
     
-    // Initialize
+    // Initialize RNG states
     int threads = gpu_config::BLOCK_SIZE;
     int blocks = (max_sims + threads - 1) / threads;
     setup_kernel<<<blocks, threads>>>((curandState*)rng_states, time(NULL), max_sims);
@@ -107,13 +104,14 @@ ParallelMCTS::ParallelMCTS(int iterations, SimulationBackend backend)
     GPU_CHECK(cudaMalloc((void**)&d_results, sizeof(int)));
 }
 
-ParallelMCTS::ParallelMCTS(std::chrono::milliseconds time_limit, SimulationBackend backend)
+LeafParallelMCTS::LeafParallelMCTS(std::chrono::milliseconds time_limit, SimulationBackend backend)
     : iterations(std::numeric_limits<int>::max()), time_limit(time_limit), use_time_limit(true), backend(backend)
 {
-    // Duplicate initialization logic (should refactor but copy-paste for safety)
+    // Allocate RNG states
     int max_sims = gpu_config::MAX_SIMULATIONS_BUFFER;
     GPU_CHECK(cudaMalloc((void**)&rng_states, max_sims * sizeof(curandState)));
     
+    // Initialize RNG states
     int threads = gpu_config::BLOCK_SIZE;
     int blocks = (max_sims + threads - 1) / threads;
     setup_kernel<<<blocks, threads>>>((curandState*)rng_states, time(NULL), max_sims);
@@ -123,12 +121,12 @@ ParallelMCTS::ParallelMCTS(std::chrono::milliseconds time_limit, SimulationBacke
     GPU_CHECK(cudaMalloc((void**)&d_results, sizeof(int)));
 }
 
-ParallelMCTS::~ParallelMCTS() {
+LeafParallelMCTS::~LeafParallelMCTS() {
     if (rng_states) cudaFree(rng_states);
     if (d_results) cudaFree(d_results);
 }
 
-// Duplicate helper for MCTS traversal
+// Helper for MCTS tree traversal to a leaf
 Node* tree_policy(Node* node) {
     while (!node->is_terminal()) {
         if (!node->is_fully_expanded()) {
@@ -143,31 +141,33 @@ Node* tree_policy(Node* node) {
 
 // Backpropagate batch simulation results up the tree
 // Unlike standard MCTS (1 simulation per iteration), we ran n_sims parallel simulations
-void backpropagate_parallel(Node* node, double avg_result, int n_sims) {
+void backpropagate_leaf_parallel(Node* node, double avg_result, int n_sims) {
     while (node != nullptr) {
-        // Update node statistics with batch results
         // avg_result is the fraction of simulations won by Black (0.0 to 1.0)
-        // We accumulate n_sims visits and proportional wins
-        
         double batch_wins = avg_result * n_sims; // Total Black wins in the batch
         
-        // Direct member access for efficiency (Node members are public)
-        // Perspective flip: if Black moved to create this node, add Black wins
-        // If White moved to create this node, add White wins (n_sims - batch_wins)
+        // Update visits (atomic int)
+        node->visits.fetch_add(n_sims);
         
-        node->visits += n_sims;
-        
+        // Update wins (atomic double - requires compare-exchange loop)
+        double wins_to_add;
         if (node->player_moved_to_create_node == 0) {
-            node->wins += batch_wins;
+            wins_to_add = batch_wins;
         } else {
-            node->wins += (n_sims - batch_wins);
+            wins_to_add = n_sims - batch_wins;
+        }
+        
+        // Compare-and-swap loop for atomic double
+        double old_wins = node->wins.load();
+        while (!node->wins.compare_exchange_weak(old_wins, old_wins + wins_to_add)) {
+            // Loop continues until successful update
         }
         
         node = node->parent;
     }
 }
 
-Move ParallelMCTS::get_best_move(Board const& state)
+Move LeafParallelMCTS::get_best_move(Board const& state)
 {
     Node root(state); // Root node
     
@@ -178,13 +178,13 @@ Move ParallelMCTS::get_best_move(Board const& state)
         return 0; // Pass
     }
     
-    // ... setup timers ...
     using clock = std::chrono::steady_clock;
     auto start_time = clock::now();
     
     last_executed_iterations = 0;
     int total_leaves_evaluated = 0;
     
+    // Main MCTS loop with leaf parallelization
     while (last_executed_iterations < iterations) {
         if (use_time_limit) {
             auto current_now = clock::now();
@@ -193,37 +193,37 @@ Move ParallelMCTS::get_best_move(Board const& state)
             }
         }
     
-        Node* node = tree_policy(&root);
+        // 1. Selection & Expansion: Navigate to a leaf node
+        Node* leaf_node = tree_policy(&root);
         
-        // MCTS Simulation Phase - run parallel GPU simulations from this node
+        // 2. Simulation: Run LEAF_SIMULATIONS parallel GPU playouts from this leaf
         // Convert node state to DeviceBoard for GPU execution
         // Node->player_moved_to_create_node indicates who moved to reach this state:
         //   0 = Black moved to create node -> current turn is White
         //   1 = White moved to create node -> current turn is Black
-        // Root node has player_moved_to_create_node=1, so Black moves first
-        bool is_black_turn = (node->player_moved_to_create_node == 1);
+        bool is_black_turn = (leaf_node->player_moved_to_create_node == 1);
         
-        gpu::DeviceBoard device_state(
-            node->state.get_curr_player_mask(), 
-            node->state.get_opp_player_mask(), 
+        gpu::DeviceBoard leaf_state(
+            leaf_node->state.get_curr_player_mask(), 
+            leaf_node->state.get_opp_player_mask(), 
             is_black_turn
         );
         
         // Number of parallel simulations per leaf
         int n_sims = gpu_config::LEAF_SIMULATIONS;
         
-        double avg_result = 0.0;
-        
+        // Reset result buffer and launch GPU simulations
         GPU_CHECK(cudaMemset(d_results, 0, sizeof(int)));
+        run_cuda_simulations(leaf_state, n_sims, d_results);
         
-        run_cuda_simulations(device_state, n_sims, d_results);
+        // Retrieve results (number of Black wins)
+        int total_black_wins = 0;
+        GPU_CHECK(cudaMemcpy(&total_black_wins, d_results, sizeof(int), cudaMemcpyDeviceToHost));
         
-        int total_wins = 0;
-        GPU_CHECK(cudaMemcpy(&total_wins, d_results, sizeof(int), cudaMemcpyDeviceToHost));
+        double avg_result = (double)total_black_wins / n_sims;
         
-        avg_result = (double)total_wins / n_sims;
-        
-        backpropagate_parallel(node, avg_result, n_sims);
+        // 3. Backpropagation: Update tree with batch results
+        backpropagate_leaf_parallel(leaf_node, avg_result, n_sims);
         
         last_executed_iterations++;
         total_leaves_evaluated++;
@@ -236,11 +236,13 @@ Move ParallelMCTS::get_best_move(Board const& state)
     // Print performance metrics
     int total_sims = total_leaves_evaluated * gpu_config::LEAF_SIMULATIONS;
     double time_per_leaf_ms = (last_duration_seconds * 1000.0) / std::max(1, total_leaves_evaluated);
-    std::cout << "Performance: " << total_leaves_evaluated << " leaves evaluated, "
+    std::cout << "Leaf-Parallel MCTS Performance: " 
+              << total_leaves_evaluated << " leaves evaluated, "
               << total_sims << " total simulations, "
-              << time_per_leaf_ms << " ms/leaf" << std::endl;
+              << time_per_leaf_ms << " ms/leaf, "
+              << get_pps() << " playouts/sec" << std::endl;
     
-    // Select best move
+    // Select best move based on visit count
     Node *best_node = nullptr;
     int max_visits = -1;
     for (auto const &child : root.children) {
@@ -252,17 +254,17 @@ Move ParallelMCTS::get_best_move(Board const& state)
     return best_node ? best_node->move_from_parent : 0;
 }
 
-double ParallelMCTS::get_pps() const {
+double LeafParallelMCTS::get_pps() const {
     if (last_duration_seconds > 0.0) {
         return (last_executed_iterations * gpu_config::LEAF_SIMULATIONS) / last_duration_seconds;
     }
     return 0.0;
 }
 
-void ParallelMCTS::run_cuda_simulations(gpu::DeviceBoard initial_state, int n_sims, int* results) {
+void LeafParallelMCTS::run_cuda_simulations(gpu::DeviceBoard leaf_state, int n_sims, int* results) {
     int threads = gpu_config::BLOCK_SIZE;
     int blocks = (n_sims + threads - 1) / threads;
-    playout_kernel<<<blocks, threads>>>(initial_state, n_sims, results, (curandState*)rng_states);
+    leaf_playout_kernel<<<blocks, threads>>>(leaf_state, n_sims, results, (curandState*)rng_states);
     GPU_CHECK(cudaGetLastError());
     GPU_CHECK(cudaDeviceSynchronize());
 }

@@ -8,8 +8,8 @@
 #include <sstream>
 #include "src/board.h"
 #include "src/mcts.h"
-#include "src_gpu/parallel_mcts.h"
-#include "src_gpu/gpu_config.h"
+#include "src/mcts_leaf_parallel.h"
+#include "src/gpu_config.h"
 
 // Abstract Agent Interface to simplify the loop
 class Agent {
@@ -30,12 +30,12 @@ public:
 };
 
 class GpuAgent : public Agent {
-    ParallelMCTS mcts;
+    LeafParallelMCTS mcts;
     std::string type_name;
 public:
     GpuAgent(int time_ms, SimulationBackend backend) 
         : mcts(std::chrono::milliseconds(time_ms), backend) {
-        type_name = "GPU (CUDA)";
+        type_name = "GPU (Leaf-Parallel CUDA)";
     }
     Move get_move(const Board& state) override { return mcts.get_best_move(state); }
     std::string name() const override { return type_name; }

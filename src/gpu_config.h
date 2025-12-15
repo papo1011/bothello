@@ -2,6 +2,7 @@
 
 namespace gpu_config {
 
+    // GPU Configuration for Leaf-Parallel MCTS
     // Tuned for RTX 5060 Laptop (Blackwell architecture, 8GB VRAM, ~3,584 CUDA cores)
     // Using compute_89 for CUDA 12.0 compiler compatibility
     

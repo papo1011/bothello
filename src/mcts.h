@@ -4,6 +4,7 @@
 #include <chrono>
 #include <memory>
 #include <random>
+#include <atomic>
 
 // Monte-Carlo Tree Search Node structure
 struct Node {
@@ -21,8 +22,9 @@ struct Node {
     // Moves that have not been expanded yet
     std::vector<uint64_t> untried_moves;
 
-    double wins;
-    int visits;
+    std::atomic<double> wins;
+    std::atomic<int> visits;
+    std::atomic<bool> fully_expanded;
 
     // 0 for Root's player, 1 for Opponent
     int player_moved_to_create_node;
@@ -50,7 +52,7 @@ class MCTS {
     MCTS(int iterations);
     MCTS(std::chrono::milliseconds time_limit);
 
-    Move get_best_move(Board const &state);
+    virtual Move get_best_move(Board const &state);
 
     // Returns Playout Per Second of the last MCTS search
     // number of simulations divided by time taken

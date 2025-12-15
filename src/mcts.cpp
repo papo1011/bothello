@@ -9,6 +9,7 @@ Node::Node(Board const &state, Node *parent, uint64_t move)
     , move_from_parent(move)
     , wins(0)
     , visits(0)
+    , fully_expanded(false)
 {
     MoveList moves = state.list_available_legal_moves();
     untried_moves = get_moves_as_vector(moves);
@@ -21,6 +22,10 @@ Node::Node(Board const &state, Node *parent, uint64_t move)
         if (copy.is_there_a_legal_move_available()) {
             untried_moves.push_back(0); // move 0 represents a PASS
         }
+    }
+    
+    if (untried_moves.empty()) {
+        fully_expanded = true;
     }
 
     // Multi-threading random engine
@@ -39,9 +44,9 @@ Node::Node(Board const &state, Node *parent, uint64_t move)
     }
 }
 
-bool Node::is_fully_expanded() const { return untried_moves.empty(); }
+bool Node::is_fully_expanded() const { return fully_expanded; }
 
-bool Node::is_terminal() const { return untried_moves.empty() && children.empty(); }
+bool Node::is_terminal() const { return fully_expanded && children.empty(); }
 
 Node *Node::best_child(double c_param) const
 {
@@ -51,7 +56,7 @@ Node *Node::best_child(double c_param) const
     // pick the child with the highest UCB value
     for (auto const &child : children) {
         double ucb = (child->wins / child->visits) +
-                     c_param * std::sqrt(2.0 * std::log(this->visits) / child->visits);
+                     c_param * std::sqrt(2.0 * std::log((double)this->visits) / child->visits);
 
         if (ucb > best_value) {
             best_value = ucb;
@@ -74,13 +79,21 @@ Node *Node::expand()
 
     children.push_back(std::move(child));
 
+    if (untried_moves.empty()) {
+        fully_expanded = true;
+    }
+
     return child_ptr;
 }
 
 void Node::update(double result)
 {
     visits++;
-    wins += result;
+    // Atomic double addition using CAS loop (C++17 compatible)
+    double current_wins = wins.load();
+    while (!wins.compare_exchange_weak(current_wins, current_wins + result)) {
+        // current_wins is updated by compare_exchange_weak
+    }
 }
 
 MCTS::MCTS(int iterations)

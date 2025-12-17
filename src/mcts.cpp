@@ -23,7 +23,7 @@ Node::Node(Board const &state, Node *parent, uint64_t move)
             untried_moves.push_back(0); // move 0 represents a PASS
         }
     }
-    
+
     if (untried_moves.empty()) {
         fully_expanded = true;
     }
@@ -55,8 +55,9 @@ Node *Node::best_child(double c_param) const
 
     // pick the child with the highest UCB value
     for (auto const &child : children) {
-        double ucb = (child->wins / child->visits) +
-                     c_param * std::sqrt(2.0 * std::log((double)this->visits) / child->visits);
+        double ucb =
+            (child->wins / child->visits) +
+            c_param * std::sqrt(2.0 * std::log((double)this->visits) / child->visits);
 
         if (ucb > best_value) {
             best_value = ucb;
@@ -197,10 +198,11 @@ double MCTS::default_policy(Board state)
         current.move(random_move);
     }
 
-    auto score = current.score();
-    if (score.first > score.second)
+    int my_score, opp_score;
+    current.get_score(my_score, opp_score);
+    if (my_score > opp_score)
         return 1.0;
-    if (score.second > score.first)
+    if (my_score < opp_score)
         return 0.0;
     return 0.5;
 }

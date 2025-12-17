@@ -1,19 +1,16 @@
 #pragma once
 
-#include "mcts.h"
 #include "board.h"
+#include "mcts.h"
+#include <chrono>
 #include <memory>
 #include <string>
-#include <chrono>
 
 // Enum to select the simulation backend
-enum class SimulationBackend {
-    CPU,
-    CUDA_PURE
-};
+enum class SimulationBackend { CPU, CUDA_PURE };
 
 // GPU-accelerated Monte Carlo Tree Search for Othello/Reversi
-// 
+//
 // KEY CONCEPT: Leaf Parallelization
 // ================================
 // Unlike traditional MCTS which runs one simulation per tree iteration,
@@ -29,30 +26,30 @@ enum class SimulationBackend {
 // This amortizes GPU kernel launch overhead and exploits massive parallelism
 // at the cost of slightly less precise tree statistics per simulation.
 class LeafParallelMCTS {
-public:
+  public:
     LeafParallelMCTS(int iterations, SimulationBackend backend);
     LeafParallelMCTS(std::chrono::milliseconds time_limit, SimulationBackend backend);
     ~LeafParallelMCTS();
-    
-    Move get_best_move(Board const& state);
-    double get_pps() const;  // Returns playouts per second (total simulations / time)
 
-private:
+    Move get_best_move(Board const &state);
+    double get_pps() const; // Returns playouts per second (total simulations / time)
+
+  private:
     int iterations;
     std::chrono::milliseconds time_limit;
     bool use_time_limit = false;
     SimulationBackend backend;
-    
+
     int last_executed_iterations = 0;
     double last_duration_seconds = 0.0;
-    
-    void run_parallel_simulations(Node* node, int n_sims);
-    
+
+    void run_parallel_simulations(Node *node, int n_sims);
+
     // Helpers
     // Pure CUDA implementation
-    void run_cuda_simulations(gpu::DeviceBoard initial_state, int n_sims, int* results);
-    
-    void* rng_states = nullptr; // curandState* 
-    int* d_results = nullptr;   // Device memory for results
+    void run_cuda_simulations(Board initial_state, int n_sims, int *results);
+
+    void *rng_states = nullptr; // curandState*
+    int *d_results = nullptr;   // Device memory for results
     bool rng_initialized = false;
 };

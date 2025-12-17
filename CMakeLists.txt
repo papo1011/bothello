@@ -27,6 +27,7 @@ add_library(bothello_core
     src/board.h
     src/mcts.h
     src/mcts.cpp
+	src/mcts_leaf_parallel.cu
 )
 
 # Include the root directory so we can include "src/board.h"
@@ -39,18 +40,16 @@ target_link_libraries(bothello PRIVATE bothello_core)
 # Versus executable
 add_executable(bothello_versus
     versus.cpp
-    src/mcts_leaf_parallel.cu
 )
 target_link_libraries(bothello_versus PRIVATE bothello_core)
 set_target_properties(bothello_versus PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 # Play executable (Human vs GPU)
-add_executable(bothello_play
-    Testing/play.cpp
-    src/mcts_leaf_parallel.cu
-)
-target_link_libraries(bothello_play PRIVATE bothello_core)
-set_target_properties(bothello_play PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+# add_executable(bothello_play
+#     src/mcts_leaf_parallel.cu
+# )
+# target_link_libraries(bothello_play PRIVATE bothello_core)
+# set_target_properties(bothello_play PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 option(BUILD_TESTS "Build tests" OFF)
 

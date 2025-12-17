@@ -82,7 +82,8 @@ int main()
     if (pps_move55 >= 0.0)
         log << "PPS at move 55: " << pps_move55 << std::endl;
 
-    auto [black_score, white_score] = board.score();
+    int black_score, white_score;
+    board.get_score(black_score, white_score);
     log << "Final score - Black: " << black_score << "  White: " << white_score
         << std::endl;
 

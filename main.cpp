@@ -33,7 +33,8 @@ int main()
 
     log << "Initial board:\n" << board << std::endl;
 
-    MCTS mcts(std::chrono::milliseconds(10 * 1000));
+    // MCTS mcts(std::chrono::milliseconds(10 * 1000));
+    MCTS mcts(std::chrono::milliseconds(1000));
 
     int const max_moves = 100;
     int moves_played = 0;

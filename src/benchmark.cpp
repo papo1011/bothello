@@ -4,8 +4,9 @@
 #include "mcts_tree_openmp.h"
 #include <chrono>
 #include <cstdint>
-#include <ctime>
 #include <iostream>
+#include <memory>
+#include <sstream>
 #include <string>
 
 // Abstract Agent Interface to simplify the loop
@@ -96,26 +97,26 @@ int main()
         run_benchmark("Serial MCTS (5s)", mcts_serial, board);
     }
 
-    // 2. Parallel MCTS (OpenMP)
+    // 2. Parallel Tree MCTS (OpenMP)
     {
-        std::cout << "--- Parallel MCTS (OpenMP) ---" << std::endl;
+        std::cout << "--- Parallel Tree MCTS (OpenMP) ---" << std::endl;
         // Run for 5 seconds
         MCTSTree mcts_parallel(std::chrono::milliseconds(5000));
         run_benchmark("Parallel MCTS (5s)", mcts_parallel, board);
     }
 
     /////////////////////////////////////////////////////////////////
-    std::cout << "=== BOTHELLO VERSUS ARENA ===\n";
-    std::cout << "Player 1 (Black): " << player1->name() << "\n";
-    std::cout << "Player 2 (White): " << player2->name() << "\n";
-    std::cout << "Time Config: " << 5000 << " ms per move\n";
-    std::cout << "=============================\n\n";
-
     std::string p1_type = "cpu";
     std::string p2_type = "cuda";
 
-    auto player1 = create_agent(p1_type, 5000);
-    auto player2 = create_agent(p2_type, 5000);
+    auto player1 = create_agent(p1_type, 1000);
+    auto player2 = create_agent(p2_type, 1000);
+
+    std::cout << "=== BOTHELLO VERSUS ARENA ===\n";
+    std::cout << "Player 1 (Black): " << player1->name() << "\n";
+    std::cout << "Player 2 (White): " << player2->name() << "\n";
+    std::cout << "Time Config: " << 1000 << " ms per move\n";
+    std::cout << "=============================\n\n";
 
     int turn = 0;
     static bool is_p1_turn = true; // Player 1 (Black) starts
@@ -143,7 +144,7 @@ int main()
         if (best_move == 0)
             std::cout << "Player passes.\n";
         else
-            std::cout << "Selected move: " << to_string(best_move) << "\n";
+            std::cout << "Selected move: " << move_to_gtp(best_move) << "\n";
         std::cout << "Performance: " << pps << " PPS\n";
 
         board.move(best_move);
@@ -156,8 +157,8 @@ int main()
     // Count score
     std::stringstream ss;
     ss << board;
-    std::string s = ss.str();
 
+    std::string s = ss.str();
     int b_count = 0;
     int w_count = 0;
     for (char c : s) {

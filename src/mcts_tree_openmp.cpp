@@ -182,10 +182,11 @@ double MCTSTree::default_policy(Board state)
         current.move(random_move);
     }
 
-    auto score = current.score();
-    if (score.first > score.second)
+    int my_score, opp_score;
+    state.get_score(my_score, opp_score);
+    if (my_score > opp_score)
         return 1.0;
-    if (score.second > score.first)
+    if (my_score > opp_score)
         return 0.0;
     return 0.5;
 }

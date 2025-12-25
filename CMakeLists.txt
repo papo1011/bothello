@@ -28,6 +28,8 @@ add_library(bothello_core
     src/mcts.h
     src/mcts.cpp
 	src/mcts_leaf_parallel.cu
+    src/mcts_tree_cuda.h
+    src/mcts_tree_cuda.cu
 	src/mcts_tree_openmp.h
 	src/mcts_tree_openmp.cpp
 )

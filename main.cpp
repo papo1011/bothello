@@ -1,5 +1,6 @@
 #include "src/board.h"
 #include "src/mcts.h"
+#include "src/mcts_tree_cuda.h"
 #include <ctime>
 #include <fstream>
 #include <iomanip>
@@ -33,8 +34,7 @@ int main()
 
     log << "Initial board:\n" << board << std::endl;
 
-    // MCTS mcts(std::chrono::milliseconds(10 * 1000));
-    MCTS mcts(std::chrono::milliseconds(1000));
+    MCTSTree mcts(std::chrono::milliseconds(1000));
 
     int const max_moves = 100;
     int moves_played = 0;

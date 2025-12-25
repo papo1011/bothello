@@ -1,6 +1,7 @@
 #include "board.h"
 #include "mcts.h"
 #include "mcts_leaf_parallel.h"
+#include "mcts_tree_cuda.h"
 #include "mcts_tree_openmp.h"
 #include <chrono>
 #include <cstdint>
@@ -102,6 +103,13 @@ int main()
         std::cout << "--- Parallel Tree MCTS (OpenMP) ---" << std::endl;
         // Run for 5 seconds
         MCTSTreeOMP mcts_parallel(std::chrono::milliseconds(5000));
+        run_benchmark("Parallel MCTS (5s)", mcts_parallel, board);
+    }
+
+    // 3. Parallel Tree MCTS (CUDA)
+    {
+        std::cout << "--- Parallel Tree MCTS (CUDA) ---" << std::endl;
+        MCTSTree mcts_parallel(std::chrono::milliseconds(5000));
         run_benchmark("Parallel MCTS (5s)", mcts_parallel, board);
     }
 

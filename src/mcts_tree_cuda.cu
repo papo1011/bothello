@@ -172,8 +172,8 @@ __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
                         int new_idx = atomicAdd(node_count, 1);
                         if (new_idx >= max_nodes) {
                             // Memory full, we can't use this node.
-                            // We lost the move from untried_moves, but we can't add the child.
-                            // Just simulate.
+                            // We lost the move from untried_moves, but we can't add the
+                            // child. Just simulate.
                             goto simulation;
                         }
 
@@ -285,7 +285,7 @@ void MCTSTree::initialize_gpu(int num_threads)
     GPU_CHECK(cudaMalloc(&d_nodes, max_nodes * sizeof(GpuNode)));
     GPU_CHECK(cudaMalloc(&d_node_count, sizeof(int)));
     GPU_CHECK(cudaMalloc(&d_states, num_threads * sizeof(curandState)));
-    
+
     // Use mapped pinned memory for stop flag
     GPU_CHECK(cudaHostAlloc(&h_stop_flag, sizeof(int), cudaHostAllocMapped));
     GPU_CHECK(cudaHostGetDevicePointer(&d_stop_flag, h_stop_flag, 0));

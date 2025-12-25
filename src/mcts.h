@@ -1,10 +1,10 @@
 #pragma once
 
 #include "board.h"
+#include <atomic>
 #include <chrono>
 #include <memory>
 #include <random>
-#include <atomic>
 
 // Monte-Carlo Tree Search Node structure
 struct Node {

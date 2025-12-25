@@ -16,9 +16,9 @@ cmake_policy(SET CMP0104 NEW)
 
 # Default to Release if not specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "Setting build type to 'Release' as none was specified.")
-  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+	message(STATUS "Setting build type to 'Release' as none was specified.")
+	set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
 # Create a library for the core logic
@@ -51,21 +51,21 @@ target_link_libraries(benchmark PRIVATE bothello_core)
 option(BUILD_TESTS "Build tests" OFF)
 
 if(BUILD_TESTS)
-  # Testing setup
-  include(FetchContent)
-  FetchContent_Declare(
-    googletest
-    URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip)
-  # Prevent overriding the parent project's compiler/linker settings
-  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-  FetchContent_MakeAvailable(googletest)
+	# Testing setup
+	include(FetchContent)
+	FetchContent_Declare(
+		googletest
+		URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip)
+	# Prevent overriding the parent project's compiler/linker settings
+	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+	FetchContent_MakeAvailable(googletest)
 
-  enable_testing()
+	enable_testing()
 
-  # Test executable
-  add_executable(unit_tests tests/test_board.cpp)
-  target_link_libraries(unit_tests PRIVATE bothello_core gtest_main)
+	# Test executable
+	add_executable(unit_tests tests/test_board.cpp)
+	target_link_libraries(unit_tests PRIVATE bothello_core gtest_main)
 
-  include(GoogleTest)
-  gtest_discover_tests(unit_tests)
+	include(GoogleTest)
+	gtest_discover_tests(unit_tests)
 endif()

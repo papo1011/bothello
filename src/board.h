@@ -49,6 +49,11 @@ class Board {
     // the move is played. The function does not check if the move is legal.
     HOST_DEVICE void move(Move move)
     {
+        if (move == 0) {
+            this->flip();
+            return;
+        }
+
         uint64_t opponent = opp_player_mask;
         uint64_t me = curr_player_mask;
         uint64_t flips = 0;

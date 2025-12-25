@@ -101,7 +101,7 @@ int main()
     {
         std::cout << "--- Parallel Tree MCTS (OpenMP) ---" << std::endl;
         // Run for 5 seconds
-        MCTSTree mcts_parallel(std::chrono::milliseconds(5000));
+        MCTSTreeOMP mcts_parallel(std::chrono::milliseconds(5000));
         run_benchmark("Parallel MCTS (5s)", mcts_parallel, board);
     }
 

@@ -4,19 +4,19 @@
 #include <limits>
 #include <random>
 
-NodeTree::NodeTree(Board const &state, Node *parent, uint64_t move)
+NodeTreeOMP::NodeTreeOMP(Board const &state, Node *parent, uint64_t move)
     : Node(state, parent, move)
 {
     omp_init_lock(&node_mutex);
 }
 
-NodeTree::~NodeTree() { omp_destroy_lock(&node_mutex); }
+NodeTreeOMP::~NodeTreeOMP() { omp_destroy_lock(&node_mutex); }
 
-void NodeTree::lock() { omp_set_lock(&node_mutex); }
+void NodeTreeOMP::lock() { omp_set_lock(&node_mutex); }
 
-void NodeTree::unlock() { omp_unset_lock(&node_mutex); }
+void NodeTreeOMP::unlock() { omp_unset_lock(&node_mutex); }
 
-NodeTree *NodeTree::best_child(double c_param) const
+NodeTreeOMP *NodeTreeOMP::best_child(double c_param) const
 {
     // With atomics, we don't need to lock to read visits/wins
     int parent_visits = this->visits;
@@ -25,11 +25,11 @@ NodeTree *NodeTree::best_child(double c_param) const
     if (parent_visits < 1)
         parent_visits = 1;
 
-    NodeTree *best = nullptr;
+    NodeTreeOMP *best = nullptr;
     double best_value = -std::numeric_limits<double>::infinity();
 
     for (auto const &child : children) {
-        NodeTree *child_node = static_cast<NodeTree *>(child.get());
+        NodeTreeOMP *child_node = static_cast<NodeTreeOMP *>(child.get());
 
         double wins = child_node->wins;
         int visits = child_node->visits;
@@ -50,7 +50,7 @@ NodeTree *NodeTree::best_child(double c_param) const
     return best;
 }
 
-Node *NodeTree::expand()
+Node *NodeTreeOMP::expand()
 {
     // Assumes caller holds the lock on this node
     uint64_t move = untried_moves.back();
@@ -59,8 +59,8 @@ Node *NodeTree::expand()
     Board next_state = state;
     next_state.move(move);
 
-    auto child = std::make_unique<NodeTree>(next_state, this, move);
-    NodeTree *child_ptr = child.get();
+    auto child = std::make_unique<NodeTreeOMP>(next_state, this, move);
+    NodeTreeOMP *child_ptr = child.get();
 
     children.push_back(std::move(child));
 
@@ -71,9 +71,9 @@ Node *NodeTree::expand()
     return child_ptr;
 }
 
-Move MCTSTree::get_best_move(Board const &state)
+Move MCTSTreeOMP::get_best_move(Board const &state)
 {
-    NodeTree root(state);
+    NodeTreeOMP root(state);
 
     auto start_time = std::chrono::steady_clock::now();
 
@@ -90,7 +90,7 @@ Move MCTSTree::get_best_move(Board const &state)
                 break;
             }
 
-            NodeTree *node = &root;
+            NodeTreeOMP *node = &root;
 
             // Selection
             while (!node->is_terminal()) {
@@ -103,7 +103,7 @@ Move MCTSTree::get_best_move(Board const &state)
                         // Expand
                         Node *new_child = node->expand();
                         node->unlock();
-                        node = static_cast<NodeTree *>(new_child);
+                        node = static_cast<NodeTreeOMP *>(new_child);
                         break; // Reached a new node, start simulation
                     } else {
                         // Select
@@ -128,7 +128,7 @@ Move MCTSTree::get_best_move(Board const &state)
             while (node) {
                 // With atomics, update is thread-safe without locks
                 node->update(result);
-                node = static_cast<NodeTree *>(node->parent);
+                node = static_cast<NodeTreeOMP *>(node->parent);
             }
 
             thread_iterations++;
@@ -156,7 +156,7 @@ Move MCTSTree::get_best_move(Board const &state)
     return (*best_child)->move_from_parent;
 }
 
-double MCTSTree::default_policy(Board state)
+double MCTSTreeOMP::default_policy(Board state)
 {
     // Thread-local random engine
     static thread_local std::mt19937 local_shuffler{std::random_device{}()};

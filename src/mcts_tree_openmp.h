@@ -4,20 +4,20 @@
 #include "mcts.h"
 #include <omp.h>
 
-struct NodeTree : public Node {
-    NodeTree(Board const &state, Node *parent = nullptr, uint64_t move = 0);
-    ~NodeTree() override;
+struct NodeTreeOMP : public Node {
+    NodeTreeOMP(Board const &state, Node *parent = nullptr, uint64_t move = 0);
+    ~NodeTreeOMP() override;
 
     omp_lock_t node_mutex;
 
     void lock();
     void unlock();
 
-    NodeTree *best_child(double c_param = 1.414) const override;
+    NodeTreeOMP *best_child(double c_param = 1.414) const override;
     Node *expand() override;
 };
 
-class MCTSTree : public MCTS {
+class MCTSTreeOMP : public MCTS {
   public:
     using MCTS::MCTS;
 

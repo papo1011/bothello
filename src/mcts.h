@@ -56,7 +56,7 @@ class MCTS {
 
     // Returns Playout Per Second of the last MCTS search
     // number of simulations divided by time taken
-    double get_pps() const;
+    virtual double get_pps() const;
 
   protected:
     int iterations;

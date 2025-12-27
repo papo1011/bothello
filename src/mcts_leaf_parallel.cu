@@ -89,15 +89,14 @@ __global__ void leaf_playout_kernel(Board leaf_state, int n_sims, int *results,
 }
 
 // =========================================================================================
-// LeafParallelMCTS Implementation
+// MCTSLeafParallel Implementation
 // =========================================================================================
 
-LeafParallelMCTS::LeafParallelMCTS(int iterations, SimulationBackend backend)
-    : iterations(iterations)
-    , time_limit(std::chrono::milliseconds::max())
-    , use_time_limit(false)
-    , backend(backend)
+void MCTSLeafParallel::initialize_gpu()
 {
+    if (rng_initialized)
+        return;
+
     // Allocate RNG states
     int max_sims = gpu_config::MAX_SIMULATIONS_BUFFER;
     GPU_CHECK(cudaMalloc((void **)&rng_states, max_sims * sizeof(curandState)));
@@ -113,28 +112,7 @@ LeafParallelMCTS::LeafParallelMCTS(int iterations, SimulationBackend backend)
     GPU_CHECK(cudaMalloc((void **)&d_results, sizeof(int)));
 }
 
-LeafParallelMCTS::LeafParallelMCTS(std::chrono::milliseconds time_limit,
-                                   SimulationBackend backend)
-    : iterations(std::numeric_limits<int>::max())
-    , time_limit(time_limit)
-    , use_time_limit(true)
-    , backend(backend)
-{
-    // Allocate RNG states
-    int max_sims = gpu_config::MAX_SIMULATIONS_BUFFER;
-    GPU_CHECK(cudaMalloc((void **)&rng_states, max_sims * sizeof(curandState)));
-
-    // Initialize RNG states
-    int threads = gpu_config::BLOCK_SIZE;
-    int blocks = (max_sims + threads - 1) / threads;
-    setup_kernel<<<blocks, threads>>>((curandState *)rng_states, time(NULL), max_sims);
-    GPU_CHECK(cudaGetLastError());
-    rng_initialized = true;
-
-    GPU_CHECK(cudaMalloc((void **)&d_results, sizeof(int)));
-}
-
-LeafParallelMCTS::~LeafParallelMCTS()
+MCTSLeafParallel::~MCTSLeafParallel()
 {
     if (rng_states)
         cudaFree(rng_states);
@@ -186,8 +164,11 @@ void backpropagate_leaf_parallel(Node *node, double avg_result, int n_sims)
     }
 }
 
-Move LeafParallelMCTS::get_best_move(Board const &state)
+Move MCTSLeafParallel::get_best_move(Board const &state)
 {
+    // Initialize GPU on first use
+    initialize_gpu();
+
     Node root(state); // Root node
 
     // Early exit: Check if there are any valid moves
@@ -202,6 +183,8 @@ Move LeafParallelMCTS::get_best_move(Board const &state)
 
     last_executed_iterations = 0;
     int total_leaves_evaluated = 0;
+
+    bool use_time_limit = (time_limit != std::chrono::milliseconds::max());
 
     // Main MCTS loop with leaf parallelization
     while (last_executed_iterations < iterations) {
@@ -271,7 +254,7 @@ Move LeafParallelMCTS::get_best_move(Board const &state)
     return best_node ? best_node->move_from_parent : 0;
 }
 
-double LeafParallelMCTS::get_pps() const
+double MCTSLeafParallel::get_pps() const
 {
     if (last_duration_seconds > 0.0) {
         return (last_executed_iterations * gpu_config::LEAF_SIMULATIONS) /
@@ -280,7 +263,7 @@ double LeafParallelMCTS::get_pps() const
     return 0.0;
 }
 
-void LeafParallelMCTS::run_cuda_simulations(Board leaf_state, int n_sims, int *results)
+void MCTSLeafParallel::run_cuda_simulations(Board leaf_state, int n_sims, int *results)
 {
     int threads = gpu_config::BLOCK_SIZE;
     int blocks = (n_sims + threads - 1) / threads;

@@ -10,54 +10,6 @@
 #include <sstream>
 #include <string>
 
-// Abstract Agent Interface to simplify the loop
-class Agent {
-  public:
-    virtual ~Agent() = default;
-    virtual Move get_move(Board const &state) = 0;
-    virtual std::string name() const = 0;
-    virtual double get_pps_stats() const = 0;
-};
-
-class CpuAgent : public Agent {
-    MCTS mcts;
-
-  public:
-    CpuAgent(int time_ms)
-        : mcts(std::chrono::milliseconds(time_ms))
-    {
-    }
-    Move get_move(Board const &state) override { return mcts.get_best_move(state); }
-    std::string name() const override { return "CPU (MCTS)"; }
-    double get_pps_stats() const override { return mcts.get_pps(); }
-};
-
-class GpuAgent : public Agent {
-    LeafParallelMCTS mcts;
-    std::string type_name;
-
-  public:
-    GpuAgent(int time_ms, SimulationBackend backend)
-        : mcts(std::chrono::milliseconds(time_ms), backend)
-    {
-        type_name = "GPU (Leaf-Parallel CUDA)";
-    }
-    Move get_move(Board const &state) override { return mcts.get_best_move(state); }
-    std::string name() const override { return type_name; }
-    double get_pps_stats() const override { return mcts.get_pps(); }
-};
-
-// Helper: Factory
-std::unique_ptr<Agent> create_agent(std::string type, int time_ms)
-{
-    if (type == "cpu")
-        return std::make_unique<CpuAgent>(time_ms);
-    if (type == "cuda" || type == "gpu")
-        return std::make_unique<GpuAgent>(time_ms, SimulationBackend::CUDA_PURE);
-    std::cerr << "Unknown agent type: " << type << ". Defaulting to CPU.\n";
-    return std::make_unique<CpuAgent>(time_ms);
-}
-
 // Helper to create a bitmask from coordinates (row 0-7, col 0-7)
 constexpr uint64_t BIT(int row, int col) { return 1ULL << (row * 8 + col); }
 
@@ -113,16 +65,20 @@ int main()
         run_benchmark("Parallel MCTS (5s)", mcts_parallel, board);
     }
 
-    /////////////////////////////////////////////////////////////////
-    std::string p1_type = "cpu";
-    std::string p2_type = "cuda";
+    // 4. Leaf Parallel MCTS (CUDA)
+    {
+        std::cout << "--- Leaf Parallel MCTS (CUDA) ---" << std::endl;
+        MCTSLeafParallel mcts_leaf(std::chrono::milliseconds(5000));
+        run_benchmark("Leaf Parallel MCTS (5s)", mcts_leaf, board);
+    }
 
-    auto player1 = create_agent(p1_type, 1000);
-    auto player2 = create_agent(p2_type, 1000);
+    /////////////////////////////////////////////////////////////////
+    std::unique_ptr<MCTS> player1 = std::make_unique<MCTS>(std::chrono::milliseconds(1000));
+    std::unique_ptr<MCTS> player2 = std::make_unique<MCTSLeafParallel>(std::chrono::milliseconds(1000));
 
     std::cout << "=== BOTHELLO VERSUS ARENA ===\n";
-    std::cout << "Player 1 (Black): " << player1->name() << "\n";
-    std::cout << "Player 2 (White): " << player2->name() << "\n";
+    std::cout << "Player 1 (Black): CPU MCTS\n";
+    std::cout << "Player 2 (White): GPU Leaf Parallel MCTS\n";
     std::cout << "Time Config: " << 1000 << " ms per move\n";
     std::cout << "=============================\n\n";
 
@@ -134,19 +90,18 @@ int main()
         std::cout << "\n--- Turn " << turn << " ---\n";
         std::cout << board << "\n";
 
-        std::string p_name = is_p1_turn ? "Black (" + player1->name() + ")"
-                                        : "White (" + player2->name() + ")";
+        std::string p_name = is_p1_turn ? "Black (CPU MCTS)" : "White (GPU Leaf Parallel MCTS)";
         std::cout << p_name << " to move...\n";
 
         Move best_move = 0;
         double pps = 0;
 
         if (is_p1_turn) {
-            best_move = player1->get_move(board);
-            pps = player1->get_pps_stats();
+            best_move = player1->get_best_move(board);
+            pps = player1->get_pps();
         } else {
-            best_move = player2->get_move(board);
-            pps = player2->get_pps_stats();
+            best_move = player2->get_best_move(board);
+            pps = player2->get_pps();
         }
 
         if (best_move == 0)

@@ -3,6 +3,8 @@
 #include "board.h"
 #include "mcts.h"
 
+struct GpuNode;
+
 // GPU-accelerated Monte Carlo Tree Search for Othello
 //
 // BLOCK PARALLEL MCTS

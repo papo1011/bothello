@@ -32,6 +32,7 @@ add_library(bothello_core
     src/mcts_tree_cuda.cu
 	src/mcts_tree_openmp.h
 	src/mcts_tree_openmp.cpp
+	src/mcts_block.h
 )
 
 # Include the root directory so we can include "src/board.h"

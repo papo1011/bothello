@@ -52,8 +52,8 @@ struct GpuNode {
     }
 };
 
-__device__ float calculate_ucb(int parent_visits, int child_visits, float child_wins,
-                               double c_param)
+static __device__ float calculate_ucb(int parent_visits, int child_visits,
+                                      float child_wins, double c_param)
 {
     if (child_visits == 0)
         return 1e20f;
@@ -62,7 +62,7 @@ __device__ float calculate_ucb(int parent_visits, int child_visits, float child_
 }
 
 // Parallel simulation executed by all threads in the block
-__device__ float simulate_game_parallel(Board state, curandState *localState)
+static __device__ float simulate_game_parallel(Board state, curandState *localState)
 {
     int consecutive_passes = 0;
     while (consecutive_passes < 2) {

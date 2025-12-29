@@ -52,8 +52,8 @@ struct GpuNode {
     }
 };
 
-__device__ float calculate_ucb(int parent_visits, int child_visits, float child_wins,
-                               double c_param)
+static __device__ float calculate_ucb(int parent_visits, int child_visits,
+                                      float child_wins, double c_param)
 {
     if (child_visits == 0)
         return 1e20f; // Infinity
@@ -245,7 +245,7 @@ __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
     globalStates[tid] = localState;
 }
 
-__global__ void setup_rng_kernel(curandState *state, unsigned long seed, int n)
+static __global__ void setup_rng_kernel(curandState *state, unsigned long seed, int n)
 {
     int id = blockIdx.x * blockDim.x + threadIdx.x;
     if (id < n) {

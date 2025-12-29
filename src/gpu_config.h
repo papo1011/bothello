@@ -7,6 +7,7 @@ namespace gpu_config {
 // Using compute_89 for CUDA 12.0 compiler compatibility
 
 constexpr int BLOCK_SIZE = 256;         // Threads per block (standard warp multiple)
+constexpr int NUM_BLOCKS = 64;          // Number of blocks to launch
 constexpr int LEAF_SIMULATIONS = 16384; // Parallel game simulations per MCTS leaf node
 constexpr int MAX_SIMULATIONS_BUFFER =
     100000; // Max curandState buffer size for memory safety

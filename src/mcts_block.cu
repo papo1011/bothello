@@ -104,10 +104,10 @@ __global__ void init_roots_kernel(GpuNode *all_nodes, int nodes_per_tree,
     }
 }
 
-__global__ void mcts_root_parallel_kernel(GpuNode *all_nodes, int *all_node_counts,
-                                          int nodes_per_tree, curandState *globalStates,
-                                          int volatile *stop_flag, double c_param,
-                                          Board root_state, bool root_is_black)
+__global__ void mcts_block_kernel(GpuNode *all_nodes, int *all_node_counts,
+                                  int nodes_per_tree, curandState *globalStates,
+                                  int volatile *stop_flag, double c_param,
+                                  Board root_state, bool root_is_black)
 {
     int tid = threadIdx.x;
     int bid = blockIdx.x;
@@ -316,7 +316,7 @@ Move MCTSBlock::get_best_move(Board const &state)
 
     bool root_is_black = state.is_black_turn();
 
-    mcts_root_parallel_kernel<<<num_blocks, threads_per_block>>>(
+    mcts_block_kernel<<<num_blocks, threads_per_block>>>(
         d_nodes, d_node_counts, nodes_per_tree, (curandState *)d_states, d_stop_flag,
         1.414, state, root_is_black);
 
@@ -332,8 +332,14 @@ Move MCTSBlock::get_best_move(Board const &state)
     *h_stop_flag = 1;
     GPU_CHECK(cudaDeviceSynchronize());
 
-    // Aggregate Results on CPU
+    // Record duration for PPS
+    last_duration_seconds =
+        std::chrono::duration<double>(std::chrono::steady_clock::now() - start_time)
+            .count();
+
+    // Aggregate Results on CPU and compute iterations
     std::map<Move, long long> aggregate_visits;
+    long long total_root_visits = 0;
 
     for (int b = 0; b < num_blocks; b++) {
         size_t root_offset = (size_t)b * nodes_per_tree;
@@ -341,6 +347,9 @@ Move MCTSBlock::get_best_move(Board const &state)
         GpuNode root;
         GPU_CHECK(cudaMemcpy(&root, &d_nodes[root_offset], sizeof(GpuNode),
                              cudaMemcpyDeviceToHost));
+
+        // Sum root visits from all block trees
+        total_root_visits += root.visits;
 
         int curr = root.first_child;
         int safety = 0;
@@ -360,6 +369,9 @@ Move MCTSBlock::get_best_move(Board const &state)
             curr = child.next_sibling;
         }
     }
+
+    // Store iterations for PPS
+    last_executed_iterations = (double)total_root_visits;
 
     // Pick Best Move
     Move best_move = 0;

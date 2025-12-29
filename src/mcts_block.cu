@@ -28,11 +28,10 @@ struct GpuNode {
 
     uint64_t untried_moves;
 
-    // Statistics (No atomics needed here as tree is private to the block/Thread 0)
     int visits;
     float wins;
 
-    uint8_t move_idx; // 0-63, 64 for Pass
+    uint8_t move_idx;
     bool is_terminal;
 
     __host__ __device__ void init(Board s, int p, Move m)
@@ -62,14 +61,14 @@ static __device__ float calculate_ucb(int parent_visits, int child_visits,
 }
 
 // Parallel simulation executed by all threads in the block
-static __device__ float simulate_game_parallel(Board state, curandState *localState)
+__device__ float default_policy_block(Board state, curandState *localState)
 {
     int consecutive_passes = 0;
     while (consecutive_passes < 2) {
         MoveList available = state.list_available_legal_moves();
 
         if (available == 0) {
-            state.move(0);
+            state.move(0); // Pass
             consecutive_passes++;
             continue;
         }
@@ -83,17 +82,19 @@ static __device__ float simulate_game_parallel(Board state, curandState *localSt
         state.move(move);
     }
 
-    int my, opp;
-    state.get_score(my, opp);
+    int my_score, opp_score;
+    state.get_score(my_score, opp_score);
 
-    if (my > opp)
+    int black_score = state.is_black_turn() ? my_score : opp_score;
+    int white_score = state.is_black_turn() ? opp_score : my_score;
+
+    if (black_score > white_score)
         return 1.0f;
-    if (my < opp)
+    if (white_score > black_score)
         return 0.0f;
     return 0.5f;
 }
 
-// Initialize the root node for each block private tree partition
 __global__ void init_roots_kernel(GpuNode *all_nodes, int nodes_per_tree,
                                   Board root_state, int num_blocks)
 {
@@ -103,15 +104,14 @@ __global__ void init_roots_kernel(GpuNode *all_nodes, int nodes_per_tree,
     }
 }
 
-__global__ void mcts_block_kernel(GpuNode *all_nodes, int *all_node_counts,
-                                  int nodes_per_tree, curandState *globalStates,
-                                  int volatile *stop_flag, double c_param,
-                                  Board root_state)
+__global__ void mcts_root_parallel_kernel(GpuNode *all_nodes, int *all_node_counts,
+                                          int nodes_per_tree, curandState *globalStates,
+                                          int volatile *stop_flag, double c_param,
+                                          Board root_state, bool root_is_black)
 {
     int tid = threadIdx.x;
     int bid = blockIdx.x;
 
-    // Memory Partitioning: Each block works on its own slice
     GpuNode *my_tree = &all_nodes[bid * nodes_per_tree];
     int *my_node_count = &all_node_counts[bid];
 
@@ -120,20 +120,20 @@ __global__ void mcts_block_kernel(GpuNode *all_nodes, int *all_node_counts,
 
     __shared__ int shared_node_idx;
     __shared__ Board shared_board;
-    __shared__ float block_total_wins;
+    __shared__ float block_total_black_wins;
+    __shared__ int shared_depth;
 
     while (*stop_flag == 0) {
 
         // SELECTION PHASE (Thread 0 only)
         if (tid == 0) {
-            int node_idx = 0; // Local root is 0
+            int node_idx = 0;
             Board cur_board = root_state;
+            int depth = 0;
 
             while (true) {
                 if (my_tree[node_idx].is_terminal)
                     break;
-
-                // Stop if expandable
                 if (my_tree[node_idx].untried_moves != 0)
                     break;
 
@@ -155,15 +155,16 @@ __global__ void mcts_block_kernel(GpuNode *all_nodes, int *all_node_counts,
                 if (best_child == -1)
                     break;
 
-                // Descent
                 int move_i = my_tree[best_child].move_idx;
                 Move move = (move_i == 64) ? 0 : (1ULL << move_i);
                 cur_board.move(move);
                 node_idx = best_child;
+                depth++;
             }
 
             shared_node_idx = node_idx;
             shared_board = cur_board;
+            shared_depth = depth;
         }
         __syncthreads();
 
@@ -187,39 +188,53 @@ __global__ void mcts_block_kernel(GpuNode *all_nodes, int *all_node_counts,
                     next_state.move(move);
                     my_tree[new_idx].init(next_state, node_idx, move);
 
-                    // Insert at head
                     my_tree[new_idx].next_sibling = my_tree[node_idx].first_child;
                     my_tree[node_idx].first_child = new_idx;
 
                     shared_node_idx = new_idx;
                     shared_board = next_state;
+                    shared_depth++;
                 }
             }
         }
         __syncthreads();
 
-        // --- 3. PARALLEL SIMULATION (All Threads) ---
+        // PARALLEL SIMULATION (All Threads)
         Board my_board = shared_board;
-        float my_result = simulate_game_parallel(my_board, &localState);
+        float my_result = default_policy_block(my_board, &localState);
 
-        // reduction (All Threads) ---
+        // reduction (All Threads)
         if (tid == 0)
-            block_total_wins = 0;
+            block_total_black_wins = 0;
         __syncthreads();
-
-        atomicAdd(&block_total_wins, my_result);
+        atomicAdd(&block_total_black_wins, my_result);
         __syncthreads();
 
         // BACKPROPAGATION PHASE (Thread 0 only)
         if (tid == 0) {
             int curr = shared_node_idx;
-            float wins = block_total_wins;
-            int visits = blockDim.x; // 1 simulation per thread
+            float black_wins_batch = block_total_black_wins;
+            int visits = blockDim.x;
+            int d = shared_depth; // Profondità corrente (Leaf)
 
             while (curr != -1) {
                 my_tree[curr].visits += visits;
-                my_tree[curr].wins += wins;
+
+                bool mover_is_black;
+                if (d % 2 != 0) {
+                    mover_is_black = root_is_black;
+                } else {
+                    mover_is_black = !root_is_black;
+                }
+
+                if (mover_is_black) {
+                    my_tree[curr].wins += black_wins_batch;
+                } else {
+                    my_tree[curr].wins += (visits - black_wins_batch);
+                }
+
                 curr = my_tree[curr].parent;
+                d--;
             }
         }
         __syncthreads();
@@ -299,16 +314,18 @@ Move MCTSBlock::get_best_move(Board const &state)
     *h_stop_flag = 0;
     auto start_time = std::chrono::steady_clock::now();
 
-    mcts_block_kernel<<<num_blocks, threads_per_block>>>(
+    bool root_is_black = state.is_black_turn();
+
+    mcts_root_parallel_kernel<<<num_blocks, threads_per_block>>>(
         d_nodes, d_node_counts, nodes_per_tree, (curandState *)d_states, d_stop_flag,
-        1.414, state);
+        1.414, state, root_is_black);
 
     while (true) {
         auto now = std::chrono::steady_clock::now();
-        if (now - start_time > time_limit) {
+        std::chrono::duration<double> elapsed = now - start_time;
+        if (elapsed > time_limit) {
             break;
         }
-
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
@@ -325,7 +342,6 @@ Move MCTSBlock::get_best_move(Board const &state)
         GPU_CHECK(cudaMemcpy(&root, &d_nodes[root_offset], sizeof(GpuNode),
                              cudaMemcpyDeviceToHost));
 
-        // Sum visits of root's direct children
         int curr = root.first_child;
         int safety = 0;
         while (curr != -1 && safety++ < 200) {
@@ -334,17 +350,25 @@ Move MCTSBlock::get_best_move(Board const &state)
                                  cudaMemcpyDeviceToHost));
 
             Move m = (child.move_idx == 64) ? 0 : (1ULL << child.move_idx);
-            aggregate_visits[m] += child.visits;
+
+            if (aggregate_visits.find(m) == aggregate_visits.end()) {
+                aggregate_visits[m] = child.visits;
+            } else {
+                aggregate_visits[m] += child.visits;
+            }
 
             curr = child.next_sibling;
         }
     }
 
-    // 6. Pick Best Move
+    // Pick Best Move
     Move best_move = 0;
     long long max_visits = -1;
 
-    for (auto const &[move, visits] : aggregate_visits) {
+    for (auto const &pair : aggregate_visits) {
+        Move move = pair.first;
+        long long visits = pair.second;
+
         if (visits > max_visits) {
             max_visits = visits;
             best_move = move;

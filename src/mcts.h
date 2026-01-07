@@ -51,6 +51,7 @@ class MCTS {
   public:
     MCTS(int iterations);
     MCTS(std::chrono::milliseconds time_limit);
+    virtual ~MCTS() = default;
 
     virtual Move get_best_move(Board const &state);
 

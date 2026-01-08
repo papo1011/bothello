@@ -20,19 +20,15 @@ inline void gpuAssert(cudaError_t code, char const *file, int line, bool abort =
 }
 
 struct GpuNode {
-    // No Board state. State is maintained during traversal.
+    int first_child;  // Index in pool. -1 for null/unexpanded. -2 for locking.
+    int parent;       // Index in pool.
 
-    int first_child;  // Index in pool. -1 for null.
-    int next_sibling; // Index in pool. -1 for null.
-    int parent;       // Index in pool. -1 for null.
+    int visits; 
+    float wins; 
 
-    uint64_t untried_moves; // 8 bytes.
-
-    int visits; // 4 bytes.
-    float wins; // 4 bytes.
-
-    uint8_t move_idx; // 0-63. 1 byte.
-    bool is_terminal; // 1 byte.
+    uint8_t move_idx; // 0-63. 64 for pass/root.
+    uint8_t num_children; // Number of children in the contiguous block
+    bool is_terminal; 
 
     __host__ __device__ void init(Board s, int p, Move m)
     {
@@ -44,10 +40,9 @@ struct GpuNode {
 #endif
 
         first_child = -1;
-        next_sibling = -1;
+        num_children = 0;
         visits = 0;
         wins = 0.0f;
-        untried_moves = s.list_available_legal_moves();
         is_terminal = s.is_terminal();
     }
 };
@@ -131,6 +126,7 @@ __device__ float simulate_game_float(Board state, curandState *localState)
     return 0.5f;
 }
 
+
 __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
                             curandState *globalStates, int volatile *stop_flag,
                             double c_param, Board root_state)
@@ -138,91 +134,133 @@ __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     curandState localState = globalStates[tid];
 
+    // Shared variables for the root node to reduce contention
+    __shared__ int shared_root_visits;
+    __shared__ float shared_root_wins;
+
+    if (threadIdx.x == 0) {
+        shared_root_visits = 0;
+        shared_root_wins = 0.0f;
+    }
+    __syncthreads();
+
     while (*stop_flag == 0) {
         int node_idx = 0; // Root is always at index 0
         Board cur_board = root_state;
+
+        // Virtual Loss (Root)
+        atomicAdd(&shared_root_visits, 1);
 
         while (true) {
             if (nodes[node_idx].is_terminal) {
                 break;
             }
 
-            // Check if fully expanded
-            MoveList untried = nodes[node_idx].untried_moves;
+            int first_child = nodes[node_idx].first_child;
 
-            if (untried != 0) {
-                bool expanded = false;
+            // EXPANSION PHASE: "Expand All" strategy
+            // If not expanded (-1), try to expand.
+            if (first_child == -1) {
+                // Attempt to lock the node for expansion
+                int old = atomicCAS(&nodes[node_idx].first_child, -1, -2);
+                
+                if (old == -1) {
+                    // WE ARE THE EXPANDER
+                    MoveList untried = cur_board.list_available_legal_moves();
+                    int n_moves = Board::count_moves(untried);
+                    bool is_pass = (n_moves == 0); // Implicit pass if not terminal
+                    int needed_nodes = is_pass ? 1 : n_moves;
 
-                // Copy untried to local to iterate
-                MoveList current_untried = nodes[node_idx].untried_moves;
-                while (current_untried != 0) {
-
-                    // Pick random bit to reduce contention
-                    int n_moves = Board::count_moves(current_untried);
-                    int idx = curand(&localState) % n_moves;
-                    Move move = Board::get_nth_move(current_untried, idx);
-
-                    unsigned long long old_val =
-                        atomicCAS((unsigned long long *)&nodes[node_idx].untried_moves,
-                                  (unsigned long long)current_untried,
-                                  (unsigned long long)(current_untried & ~move));
-
-                    if (old_val == current_untried) {
-                        // Try to allocate first
-                        int new_idx = atomicAdd(node_count, 1);
-                        if (new_idx >= max_nodes) {
-                            // Memory full, we can't use this node.
-                            // We lost the move from untried_moves, but we can't add the
-                            // child. Just simulate.
-                            goto simulation;
-                        }
-
-                        Board next_state = cur_board;
-                        next_state.move(move);
-
-                        nodes[new_idx].init(next_state, node_idx, move);
-
-                        int old_head;
-                        do {
-                            old_head = nodes[node_idx].first_child;
-                            nodes[new_idx].next_sibling = old_head;
-                            __threadfence(); // Ensure next_sibling write is visible
-                        } while (atomicCAS((int *)&nodes[node_idx].first_child,
-                                           old_head, new_idx) != old_head);
-
-                        node_idx = new_idx;
-                        cur_board = next_state;
-                        expanded = true;
-                        break;
-                    } else {
-                        current_untried = nodes[node_idx].untried_moves;
+                    int start_idx = atomicAdd(node_count, needed_nodes);
+                    if (start_idx + needed_nodes > max_nodes) {
+                        nodes[node_idx].first_child = -1; 
+                        goto simulation;
                     }
-                }
 
-                if (expanded) {
+                    // Initialize all children in contiguous memory
+                    if (is_pass) {
+                         // Create one child representing PASS
+                         Board next_state = cur_board;
+                         next_state.move(0);
+                         nodes[start_idx].init(next_state, node_idx, 0);
+                         // Virtual Loss: First visitor visits this new node immediately
+                         nodes[start_idx].visits = 1;
+                    } else {
+                         // Create children for all moves
+                         int child_offset = 0;
+                         MoveList temp_moves = untried;
+                         while(temp_moves != 0) {
+#ifdef __CUDA_ARCH__
+                            int idx = __ffsll(temp_moves) - 1;
+#else
+                            int idx = __builtin_ffsll(temp_moves) - 1;
+#endif
+                            Move move = (1ULL << idx);
+                            temp_moves &= ~move;
+
+                            Board next_state = cur_board;
+                            next_state.move(move);
+                            
+                            nodes[start_idx + child_offset].init(next_state, node_idx, move);
+                            
+                            child_offset++;
+                         }
+                    }
+
+                    nodes[node_idx].num_children = (uint8_t)needed_nodes;
+                    __threadfence(); // Ensure children are visible
+                    nodes[node_idx].first_child = start_idx; // Unlock and publish
+                    
+                    // Fall through to selection.
+                    first_child = start_idx;
+                } 
+                else if (old == -2) {
+                    // Someone else is expanding.
+                    // We treat this node as a leaf for this simulation to avoid spinning.
                     goto simulation;
                 }
+                else {
+                    // Already expanded by someone else between our check and CAS
+                    first_child = old;
+                }
             }
+            
+            // Check again for -2 if we fell through
+            if (first_child == -2) goto simulation;
 
-            int best_child_idx = -1;
+            // SELECTION PHASE
+            int num_children = nodes[node_idx].num_children;
+            int best_child_offset = -1;
             float best_val = -1e20f;
             int parent_visits = nodes[node_idx].visits;
 
-            int curr_child_idx = nodes[node_idx].first_child;
-            while (curr_child_idx != -1) {
-                float val = calculate_ucb(parent_visits, nodes[curr_child_idx].visits,
-                                          nodes[curr_child_idx].wins, c_param);
-                if (val > best_val) {
-                    best_val = val;
-                    best_child_idx = curr_child_idx;
-                }
-                curr_child_idx = nodes[curr_child_idx].next_sibling;
+            // Use shared memory values for root if we are at root
+            if (node_idx == 0) {
+                parent_visits += atomicAdd(&shared_root_visits, 0);
+            }
+            
+            // Iterate contiguous children
+            for (int i = 0; i < num_children; i++) {
+                 int child_idx = first_child + i;
+                 int c_visits = nodes[child_idx].visits;
+                 float c_wins = nodes[child_idx].wins;
+                 
+                 float val = calculate_ucb(parent_visits, c_visits, c_wins, c_param);
+                 if (val > best_val) {
+                     best_val = val;
+                     best_child_offset = i;
+                 }
             }
 
-            if (best_child_idx == -1) {
-                // Should not happen if fully expanded and not terminal
+            if (best_child_offset == -1) {
+                // Should not happen
                 break;
             }
+
+            int best_child_idx = first_child + best_child_offset;
+
+            // Virtual Loss: Update child visits immediately
+            atomicAdd(&nodes[best_child_idx].visits, 1);
 
             // Update board and descend
             int move_i = nodes[best_child_idx].move_idx;
@@ -232,14 +270,53 @@ __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
         }
 
     simulation:
-        // Also possible to have the int version
         float result = simulate_game_float(cur_board, &localState);
 
         while (node_idx != -1) {
-            atomicAdd(&nodes[node_idx].visits, 1);
-            atomicAdd(&nodes[node_idx].wins, result);
+            bool processed = false;
+
+            // Shared Memory Accumulation for Root
+            if (node_idx == 0) {
+                // Visits were handled with Virtual Loss (start of loop)
+                atomicAdd(&shared_root_wins, result);
+                processed = true;
+            }
+
+            if (!processed) {
+                // Warp thingy
+                unsigned int mask = __match_any_sync(__activemask(), (unsigned long long)node_idx);
+                // int leader = __ffs(mask) - 1;
+                
+                atomicAdd(&nodes[node_idx].wins, result);
+            }
+
             node_idx = nodes[node_idx].parent;
         }
+
+        // Flush logic: Periodically flush shared memory to global.
+        // We do this check at the end of every simulation loop.
+        // Thread 0 of the block handles the flush.
+        if (threadIdx.x == 0) {
+            int v = atomicExch(&shared_root_visits, 0);
+            if (v > 0) {
+                atomicAdd(&nodes[0].visits, v);
+            }
+
+            float w = atomicExch(&shared_root_wins, 0.0f);
+            if (w != 0.0f) {
+                atomicAdd(&nodes[0].wins, w);
+            }
+        }
+    }
+
+    // Final flush on kernel exit
+    __syncthreads(); // Wait for all threads to finish their last loop iteration
+    if (threadIdx.x == 0) {
+        int v = atomicExch(&shared_root_visits, 0);
+        if (v > 0) atomicAdd(&nodes[0].visits, v);
+        
+        float w = atomicExch(&shared_root_wins, 0.0f);
+        if (w != 0.0f) atomicAdd(&nodes[0].wins, w);
     }
 
     globalStates[tid] = localState;
@@ -332,9 +409,6 @@ Move MCTSTree::get_best_move(Board const &state)
             break;
         }
 
-        // Check if memory is full?
-        // Check if everything allrght
-
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
@@ -346,8 +420,6 @@ Move MCTSTree::get_best_move(Board const &state)
         std::chrono::duration<double>(std::chrono::steady_clock::now() - start_time)
             .count();
 
-    // We don't track total iterations exactly anymore, but we can estimate or read root
-    // visits
     GpuNode root;
     GPU_CHECK(cudaMemcpy(&root, &d_nodes[0], sizeof(GpuNode), cudaMemcpyDeviceToHost));
     last_executed_iterations = root.visits;
@@ -355,18 +427,18 @@ Move MCTSTree::get_best_move(Board const &state)
     Move best_move = 0;
     int max_visits = -1;
 
-    int curr_child_idx = root.first_child;
-    while (curr_child_idx != -1) {
+    int first_child = root.first_child;
+    int num_children = root.num_children;
+
+    for (int i = 0; i < num_children; ++i) {
         GpuNode child;
-        GPU_CHECK(cudaMemcpy(&child, &d_nodes[curr_child_idx], sizeof(GpuNode),
+        GPU_CHECK(cudaMemcpy(&child, &d_nodes[first_child + i], sizeof(GpuNode),
                              cudaMemcpyDeviceToHost));
 
         if (child.visits > max_visits) {
             max_visits = child.visits;
             best_move = (child.move_idx == 64) ? 0 : (1ULL << child.move_idx);
         }
-
-        curr_child_idx = child.next_sibling;
     }
 
     return best_move;

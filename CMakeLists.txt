@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.14)
 
 project(BotHello CXX CUDA)
 
+option(BUILD_TESTS "Build tests" OFF)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_STANDARD 17)
@@ -34,61 +36,96 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_options($<$<COMPILE_LANGUAGE:CUDA>:-O3>)
 endif()
 
-# Create a library for the core logic
-add_library(bothello_core
+find_package(OpenMP REQUIRED)
+
+# --- Modular Libraries ---
+
+# 1. Board Library
+add_library(bothello_board
     src/board.cpp
     src/board.h
-    src/mcts.h
+)
+# Include the root directory so we can include "src/board.h"
+target_include_directories(bothello_board PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+# 2. MCTS CPU / Base Library
+add_library(bothello_mcts_cpu
     src/mcts.cpp
-	src/mcts_leaf_parallel.cu
-    src/mcts_tree_cuda.h
+    src/mcts.h
+)
+target_link_libraries(bothello_mcts_cpu PUBLIC bothello_board)
+
+# 3. MCTS OpenMP Library
+add_library(bothello_mcts_tree_omp
+    src/mcts_tree_openmp.cpp
+    src/mcts_tree_openmp.h
+)
+target_link_libraries(bothello_mcts_tree_omp PUBLIC bothello_board bothello_mcts_cpu OpenMP::OpenMP_CXX)
+
+# 4. MCTS CUDA Tree Library
+add_library(bothello_mcts_tree_cuda
     src/mcts_tree_cuda.cu
-	src/mcts_tree_openmp.h
-	src/mcts_tree_openmp.cpp
-	src/mcts_block.h
+    src/mcts_tree_cuda.h
+)
+target_link_libraries(bothello_mcts_tree_cuda PUBLIC bothello_board bothello_mcts_cpu)
+
+# 5. MCTS Leaf Parallel Library
+add_library(bothello_mcts_leaf
+    src/mcts_leaf_parallel.cu
+    src/mcts_leaf_parallel.h
+)
+target_link_libraries(bothello_mcts_leaf PUBLIC bothello_board bothello_mcts_cpu)
+
+# 6. MCTS Block Parallel Library
+add_library(bothello_mcts_block
     src/mcts_block.cu
+    src/mcts_block.h
+)
+target_link_libraries(bothello_mcts_block PUBLIC bothello_board bothello_mcts_cpu)
+
+# 7. BotHello Core - Aggregates all libraries
+add_library(bothello_core INTERFACE)
+target_link_libraries(bothello_core INTERFACE
+    bothello_board
+    bothello_mcts_cpu
+    bothello_mcts_tree_omp
+    bothello_mcts_tree_cuda
+    bothello_mcts_leaf
+    bothello_mcts_block
 )
 
-# Include the root directory so we can include "src/board.h"
-target_include_directories(bothello_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+if(NOT BUILD_TESTS)
+    # --- Executables ---
 
-find_package(OpenMP REQUIRED)
-target_link_libraries(bothello_core PUBLIC OpenMP::OpenMP_CXX)
+    # CPU Bot
+    add_executable(bothello_cpu main.cpp)
+    target_compile_definitions(bothello_cpu PRIVATE BOT_CPU)
+    target_link_libraries(bothello_cpu PRIVATE bothello_mcts_cpu)
 
-# Main executable (Default - maps to CUDA Tree)
-add_executable(bothello main.cpp)
-target_link_libraries(bothello PRIVATE bothello_core)
+    # OpenMP Bot
+    add_executable(bothello_tree_omp main.cpp)
+    target_compile_definitions(bothello_tree_omp PRIVATE BOT_OMP)
+    target_link_libraries(bothello_tree_omp PRIVATE bothello_mcts_tree_omp)
 
-# CPU Bot
-add_executable(bothello_cpu main.cpp)
-target_compile_definitions(bothello_cpu PRIVATE BOT_CPU)
-target_link_libraries(bothello_cpu PRIVATE bothello_core)
+    # CUDA Bot (Tree)
+    add_executable(bothello_tree_cuda main.cpp)
+    target_compile_definitions(bothello_tree_cuda PRIVATE BOT_CUDA)
+    target_link_libraries(bothello_tree_cuda PRIVATE bothello_mcts_tree_cuda)
 
-# OpenMP Bot
-add_executable(bothello_omp main.cpp)
-target_compile_definitions(bothello_omp PRIVATE BOT_OMP)
-target_link_libraries(bothello_omp PRIVATE bothello_core)
+    # Leaf Parallel Bot
+    add_executable(bothello_leaf main.cpp)
+    target_compile_definitions(bothello_leaf PRIVATE BOT_LEAF)
+    target_link_libraries(bothello_leaf PRIVATE bothello_mcts_leaf)
 
-# CUDA Bot (Tree)
-add_executable(bothello_cuda main.cpp)
-target_compile_definitions(bothello_cuda PRIVATE BOT_CUDA)
-target_link_libraries(bothello_cuda PRIVATE bothello_core)
+    # Block Parallel Bot
+    add_executable(bothello_block main.cpp)
+    target_compile_definitions(bothello_block PRIVATE BOT_BLOCK)
+    target_link_libraries(bothello_block PRIVATE bothello_mcts_block)
 
-# Leaf Parallel Bot
-add_executable(bothello_leaf main.cpp)
-target_compile_definitions(bothello_leaf PRIVATE BOT_LEAF)
-target_link_libraries(bothello_leaf PRIVATE bothello_core)
-
-# Block Parallel Bot
-add_executable(bothello_block main.cpp)
-target_compile_definitions(bothello_block PRIVATE BOT_BLOCK)
-target_link_libraries(bothello_block PRIVATE bothello_core)
-
-# Benchmark executable
-add_executable(benchmark src/benchmark.cpp)
-target_link_libraries(benchmark PRIVATE bothello_core)
-
-option(BUILD_TESTS "Build tests" OFF)
+    # Benchmark executable
+    add_executable(benchmark src/benchmark.cpp)
+    target_link_libraries(benchmark PRIVATE bothello_core)
+endif()
 
 if(BUILD_TESTS)
 	# Testing setup

@@ -24,6 +24,11 @@ using BotType = MCTSTree;
 #include <sstream>
 #include <unistd.h>
 
+// Profiling
+#ifdef USE_NVTX
+#include <nvtx3/nvtx3.hpp>
+#endif
+
 // Helper to create a bitmask from coordinates (row 0-7, col 0-7)
 // Assumes row 0 is top, col 0 is left (A).
 constexpr uint64_t BIT(int row, int col) { return 1ULL << (row * 8 + col); }
@@ -63,6 +68,9 @@ int main()
         if (board.is_terminal())
             break;
 
+#ifdef USE_NVTX
+        nvtx3::scoped_range r{"get_best_move"};
+#endif
         Move best_move = mcts.get_best_move(board);
 
         double pps = mcts.get_pps();

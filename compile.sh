@@ -12,6 +12,7 @@ function show_help {
     echo "Options:"
     echo "  -d          Build in Debug mode (default)"
     echo "  -r          Build in Release mode"
+    echo "  -p          Build in Profile mode (-O3 -lineinfo)"
     echo "  -t          Build and run tests"
     echo "  clean       Remove build directory"
     echo "  -h, --help  Show this help message"
@@ -26,6 +27,9 @@ do
             ;;
         -r)
             BUILD_TYPE="Release"
+            ;;
+        -p)
+            BUILD_TYPE="Profile"
             ;;
         -t)
             BUILD_TESTS="ON"

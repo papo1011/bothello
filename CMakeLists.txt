@@ -20,7 +20,7 @@ cmake_policy(SET CMP0104 NEW)
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 	message(STATUS "Setting build type to 'Release' as none was specified.")
 	set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
-	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo" "Profile")
 endif()
 
 # Explicitly set compiler options based on build type
@@ -34,9 +34,17 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     message(STATUS "Configuring for Release build: Adding optimization flags")
     add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-O3>)
     add_compile_options($<$<COMPILE_LANGUAGE:CUDA>:-O3>)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Profile")
+    message(STATUS "Configuring for Profile build: Adding optimization and lineinfo flags")
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-O3>)
+    add_compile_options($<$<COMPILE_LANGUAGE:CUDA>:-O3>)
+    add_compile_options($<$<COMPILE_LANGUAGE:CUDA>:-lineinfo>)
 endif()
 
 find_package(OpenMP REQUIRED)
+
+# Add NVTX library
+add_subdirectory(c)
 
 # --- Modular Libraries ---
 
@@ -94,33 +102,41 @@ target_link_libraries(bothello_core INTERFACE
     bothello_mcts_block
 )
 
+# Determine if we should link NVTX
+set(NVTX_LIB "")
+if(CMAKE_BUILD_TYPE STREQUAL "Profile" OR CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(NVTX_LIB nvtx3-cpp)
+    add_compile_definitions(USE_NVTX)
+    message(STATUS "NVTX Enabled for ${CMAKE_BUILD_TYPE} build")
+endif()
+
 if(NOT BUILD_TESTS)
     # --- Executables ---
 
     # CPU Bot
     add_executable(bothello_cpu main.cpp)
     target_compile_definitions(bothello_cpu PRIVATE BOT_CPU)
-    target_link_libraries(bothello_cpu PRIVATE bothello_mcts_cpu)
+    target_link_libraries(bothello_cpu PRIVATE bothello_mcts_cpu ${NVTX_LIB})
 
     # OpenMP Bot
     add_executable(bothello_tree_omp main.cpp)
     target_compile_definitions(bothello_tree_omp PRIVATE BOT_OMP)
-    target_link_libraries(bothello_tree_omp PRIVATE bothello_mcts_tree_omp)
+    target_link_libraries(bothello_tree_omp PRIVATE bothello_mcts_tree_omp ${NVTX_LIB})
 
     # CUDA Bot (Tree)
     add_executable(bothello_tree_cuda main.cpp)
     target_compile_definitions(bothello_tree_cuda PRIVATE BOT_CUDA)
-    target_link_libraries(bothello_tree_cuda PRIVATE bothello_mcts_tree_cuda)
+    target_link_libraries(bothello_tree_cuda PRIVATE bothello_mcts_tree_cuda ${NVTX_LIB})
 
     # Leaf Parallel Bot
     add_executable(bothello_leaf main.cpp)
     target_compile_definitions(bothello_leaf PRIVATE BOT_LEAF)
-    target_link_libraries(bothello_leaf PRIVATE bothello_mcts_leaf)
+    target_link_libraries(bothello_leaf PRIVATE bothello_mcts_leaf ${NVTX_LIB})
 
     # Block Parallel Bot
     add_executable(bothello_block main.cpp)
     target_compile_definitions(bothello_block PRIVATE BOT_BLOCK)
-    target_link_libraries(bothello_block PRIVATE bothello_mcts_block)
+    target_link_libraries(bothello_block PRIVATE bothello_mcts_block ${NVTX_LIB})
 
     # Benchmark executable
     add_executable(benchmark src/benchmark.cpp)

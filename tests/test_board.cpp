@@ -294,9 +294,11 @@ TEST_F(BoardTest, Score)
     uint64_t white = BIT(3, 3) | BIT(4, 4);
     Board board(black, white);
 
-    std::pair<uint64_t, uint64_t> s = board.score();
-    EXPECT_EQ(s.first, 2ULL);
-    EXPECT_EQ(s.second, 2ULL);
+    int curr_count = Board::count_moves(board.get_curr_player_mask());
+    int opp_count = Board::count_moves(board.get_opp_player_mask());
+
+    EXPECT_EQ(curr_count, 2);
+    EXPECT_EQ(opp_count, 2);
 
     // Make a move
     // Black plays C4 (3, 2). Flips D4 (3, 3).
@@ -304,21 +306,13 @@ TEST_F(BoardTest, Score)
 
     // Black: E4, D5, C4, D4 (4 pieces)
     // White: E5 (1 piece)
-    s = board.score();
-    // Note: board.score() returns {curr_player_mask count, opp_player_mask count}
-    // But after move, masks are swapped?
-    // Board::move() calls flip().
+    curr_count = Board::count_moves(board.get_curr_player_mask());
+    opp_count = Board::count_moves(board.get_opp_player_mask());
+    
+    // Note: board.move() calls flip().
     // So board.curr_player_mask is now the NEXT player (White).
     // board.opp_player_mask is the PREVIOUS player (Black).
 
-    // Let's check the implementation of score().
-    // return { __builtin_popcountll(curr_player_mask),
-    // __builtin_popcountll(opp_player_mask)
-    // };
-
-    // So s.first is current curr_player_mask (White's pieces), s.second is current
-    // opp_player_mask (Black's pieces).
-
-    EXPECT_EQ(s.first, 1ULL);  // White has 1 piece
-    EXPECT_EQ(s.second, 4ULL); // Black has 4 pieces
+    EXPECT_EQ(curr_count, 1);  // White has 1 piece
+    EXPECT_EQ(opp_count, 4); // Black has 4 pieces
 }

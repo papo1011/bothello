@@ -21,6 +21,19 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
+# Explicitly set compiler options based on build type
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(STATUS "Configuring for Debug build: Adding debug flags")
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-g>)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-O0>)
+    add_compile_options($<$<COMPILE_LANGUAGE:CUDA>:-G>)
+    add_compile_options($<$<COMPILE_LANGUAGE:CUDA>:-g>)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    message(STATUS "Configuring for Release build: Adding optimization flags")
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-O3>)
+    add_compile_options($<$<COMPILE_LANGUAGE:CUDA>:-O3>)
+endif()
+
 # Create a library for the core logic
 add_library(bothello_core
     src/board.cpp

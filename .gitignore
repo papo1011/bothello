@@ -34,3 +34,8 @@ Testing/
 *.log
 *.tmp
 *.swp
+
+# --- Profiling ---
+*.sqlite
+*.nsys-rep
+c/

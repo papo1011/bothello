@@ -1,4 +1,5 @@
 #include "mcts_tree_cuda.h"
+#include "gpu_config.h"
 #include <chrono>
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
@@ -371,8 +372,8 @@ void MCTSTree::initialize_gpu(int num_threads)
     GPU_CHECK(cudaHostGetDevicePointer(&d_stop_flag, h_stop_flag, 0));
 
     // Init RNG
-    int blocks = (num_threads + 127) / 128;
-    setup_rng_kernel<<<blocks, 128>>>((curandState *)d_states, time(NULL), num_threads);
+    int blocks = (num_threads + gpu_config::BLOCK_SIZE - 1) / gpu_config::BLOCK_SIZE;
+    setup_rng_kernel<<<blocks, gpu_config::BLOCK_SIZE>>>((curandState *)d_states, time(NULL), num_threads);
     GPU_CHECK(cudaDeviceSynchronize());
 
     is_gpu_initialized = true;
@@ -380,8 +381,7 @@ void MCTSTree::initialize_gpu(int num_threads)
 
 Move MCTSTree::get_best_move(Board const &state)
 {
-    int num_threads = 1024 * 4; // 4096 threads
-    // Total iterations = 4096 * 10 = 40k per launch.
+    int num_threads = gpu_config::NUM_BLOCKS * gpu_config::BLOCK_SIZE;
 
     initialize_gpu(num_threads);
 
@@ -401,8 +401,7 @@ Move MCTSTree::get_best_move(Board const &state)
     // Run MCTS
     auto start_time = std::chrono::steady_clock::now();
 
-    int blocks = (num_threads + 127) / 128;
-    mcts_kernel<<<blocks, 128>>>(d_nodes, d_node_count, max_nodes,
+    mcts_kernel<<<gpu_config::NUM_BLOCKS, gpu_config::BLOCK_SIZE>>>(d_nodes, d_node_count, max_nodes,
                                  (curandState *)d_states, d_stop_flag, 1.414, state);
 
     // Wait for time limit

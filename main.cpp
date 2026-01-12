@@ -1,6 +1,22 @@
 #include "src/board.h"
 #include "src/mcts.h"
-#include "src/mcts_tree_cuda.h"
+
+#if defined(BOT_CPU)
+    using BotType = MCTS;
+#elif defined(BOT_OMP)
+    #include "src/mcts_tree_openmp.h"
+    using BotType = MCTSTreeOMP;
+#elif defined(BOT_LEAF)
+    #include "src/mcts_leaf_parallel.h"
+    using BotType = MCTSLeafParallel;
+#elif defined(BOT_BLOCK)
+    #include "src/mcts_block.h"
+    using BotType = MCTSBlock;
+#else // Default or BOT_CUDA
+    #include "src/mcts_tree_cuda.h"
+    using BotType = MCTSTree;
+#endif
+
 #include <ctime>
 #include <fstream>
 #include <iomanip>
@@ -34,7 +50,7 @@ int main()
 
     log << "Initial board:\n" << board << std::endl;
 
-    MCTSTree mcts(std::chrono::milliseconds(1000));
+    BotType mcts(std::chrono::milliseconds(1000));
 
     int const max_moves = 100;
     int moves_played = 0;

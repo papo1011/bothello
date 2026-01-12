@@ -42,9 +42,34 @@ target_include_directories(bothello_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 find_package(OpenMP REQUIRED)
 target_link_libraries(bothello_core PUBLIC OpenMP::OpenMP_CXX)
 
-# Main executable
+# Main executable (Default - maps to CUDA Tree)
 add_executable(bothello main.cpp)
 target_link_libraries(bothello PRIVATE bothello_core)
+
+# CPU Bot
+add_executable(bothello_cpu main.cpp)
+target_compile_definitions(bothello_cpu PRIVATE BOT_CPU)
+target_link_libraries(bothello_cpu PRIVATE bothello_core)
+
+# OpenMP Bot
+add_executable(bothello_omp main.cpp)
+target_compile_definitions(bothello_omp PRIVATE BOT_OMP)
+target_link_libraries(bothello_omp PRIVATE bothello_core)
+
+# CUDA Bot (Tree)
+add_executable(bothello_cuda main.cpp)
+target_compile_definitions(bothello_cuda PRIVATE BOT_CUDA)
+target_link_libraries(bothello_cuda PRIVATE bothello_core)
+
+# Leaf Parallel Bot
+add_executable(bothello_leaf main.cpp)
+target_compile_definitions(bothello_leaf PRIVATE BOT_LEAF)
+target_link_libraries(bothello_leaf PRIVATE bothello_core)
+
+# Block Parallel Bot
+add_executable(bothello_block main.cpp)
+target_compile_definitions(bothello_block PRIVATE BOT_BLOCK)
+target_link_libraries(bothello_block PRIVATE bothello_core)
 
 # Benchmark executable
 add_executable(benchmark src/benchmark.cpp)

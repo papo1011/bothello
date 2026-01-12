@@ -152,14 +152,15 @@ void update_elo(EloEntry &r1, EloEntry &r2, double actual_score_p1)
     }
 }
 
-void run_arena(int rounds_per_pair = 2)
+void run_arena(int rounds_per_pair = 2, std::chrono::milliseconds time_limit = std::chrono::milliseconds(100))
 {
     std::vector<BotConfig> bots = {
-        {"Serial MCTS", BotType::Serial, std::chrono::milliseconds(100)},
-        {"OMP MCTS", BotType::TreeOMP, std::chrono::milliseconds(100)},
-        {"CUDA Tree", BotType::TreeCUDA, std::chrono::milliseconds(100)},
-        {"CUDA Leaf", BotType::LeafCUDA, std::chrono::milliseconds(100)},
-        {"CUDA Block", BotType::BlockCUDA, std::chrono::milliseconds(100)}};
+        {"Serial MCTS", BotType::Serial, time_limit},
+        {"OMP MCTS", BotType::TreeOMP, time_limit},
+        {"CUDA Tree", BotType::TreeCUDA, time_limit},
+        {"CUDA Leaf", BotType::LeafCUDA, time_limit},
+        {"CUDA Block", BotType::BlockCUDA, time_limit},
+    };
 
     std::map<std::string, EloEntry> ratings;
     for (auto const &bot : bots) {
@@ -264,7 +265,7 @@ int main()
     }
 
     // Run Arena
-    run_arena(4); // 1 round per pair (2 games total per pair)
+    run_arena(1, std::chrono::milliseconds(200)); // 1 round per pair (2 games total per pair)
 
     return 0;
 }

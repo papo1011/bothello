@@ -20,15 +20,15 @@ inline void gpuAssert(cudaError_t code, char const *file, int line, bool abort =
 }
 
 struct GpuNode {
-    int first_child;  // Index in pool. -1 for null/unexpanded. -2 for locking.
-    int parent;       // Index in pool.
+    int first_child; // Index in pool. -1 for null/unexpanded. -2 for locking.
+    int parent;      // Index in pool.
 
-    int visits; 
-    float wins; 
+    int visits;
+    float wins;
 
-    uint8_t move_idx; // 0-63. 64 for pass/root.
+    uint8_t move_idx;     // 0-63. 64 for pass/root.
     uint8_t num_children; // Number of children in the contiguous block
-    bool is_terminal; 
+    bool is_terminal;
 
     __host__ __device__ void init(Board s, int p, Move m)
     {
@@ -126,7 +126,6 @@ __device__ float simulate_game_float(Board state, curandState *localState)
     return 0.5f;
 }
 
-
 __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
                             curandState *globalStates, int volatile *stop_flag,
                             double c_param, Board root_state)
@@ -163,7 +162,7 @@ __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
             if (first_child == -1) {
                 // Attempt to lock the node for expansion
                 int old = atomicCAS(&nodes[node_idx].first_child, -1, -2);
-                
+
                 if (old == -1) {
                     // WE ARE THE EXPANDER
                     MoveList untried = cur_board.list_available_legal_moves();
@@ -173,23 +172,23 @@ __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
 
                     int start_idx = atomicAdd(node_count, needed_nodes);
                     if (start_idx + needed_nodes > max_nodes) {
-                        nodes[node_idx].first_child = -1; 
+                        nodes[node_idx].first_child = -1;
                         goto simulation;
                     }
 
                     // Initialize all children in contiguous memory
                     if (is_pass) {
-                         // Create one child representing PASS
-                         Board next_state = cur_board;
-                         next_state.move(0);
-                         nodes[start_idx].init(next_state, node_idx, 0);
-                         // Virtual Loss: First visitor visits this new node immediately
-                         nodes[start_idx].visits = 1;
+                        // Create one child representing PASS
+                        Board next_state = cur_board;
+                        next_state.move(0);
+                        nodes[start_idx].init(next_state, node_idx, 0);
+                        // Virtual Loss: First visitor visits this new node immediately
+                        nodes[start_idx].visits = 1;
                     } else {
-                         // Create children for all moves
-                         int child_offset = 0;
-                         MoveList temp_moves = untried;
-                         while(temp_moves != 0) {
+                        // Create children for all moves
+                        int child_offset = 0;
+                        MoveList temp_moves = untried;
+                        while (temp_moves != 0) {
 #ifdef __CUDA_ARCH__
                             int idx = __ffsll(temp_moves) - 1;
 #else
@@ -200,33 +199,34 @@ __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
 
                             Board next_state = cur_board;
                             next_state.move(move);
-                            
-                            nodes[start_idx + child_offset].init(next_state, node_idx, move);
-                            
+
+                            nodes[start_idx + child_offset].init(next_state, node_idx,
+                                                                 move);
+
                             child_offset++;
-                         }
+                        }
                     }
 
                     nodes[node_idx].num_children = (uint8_t)needed_nodes;
                     __threadfence(); // Ensure children are visible
                     nodes[node_idx].first_child = start_idx; // Unlock and publish
-                    
+
                     // Fall through to selection.
                     first_child = start_idx;
-                } 
-                else if (old == -2) {
+                } else if (old == -2) {
                     // Someone else is expanding.
-                    // We treat this node as a leaf for this simulation to avoid spinning.
+                    // We treat this node as a leaf for this simulation to avoid
+                    // spinning.
                     goto simulation;
-                }
-                else {
+                } else {
                     // Already expanded by someone else between our check and CAS
                     first_child = old;
                 }
             }
-            
+
             // Check again for -2 if we fell through
-            if (first_child == -2) goto simulation;
+            if (first_child == -2)
+                goto simulation;
 
             // SELECTION PHASE
             int num_children = nodes[node_idx].num_children;
@@ -238,18 +238,18 @@ __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
             if (node_idx == 0) {
                 parent_visits += atomicAdd(&shared_root_visits, 0);
             }
-            
+
             // Iterate contiguous children
             for (int i = 0; i < num_children; i++) {
-                 int child_idx = first_child + i;
-                 int c_visits = nodes[child_idx].visits;
-                 float c_wins = nodes[child_idx].wins;
-                 
-                 float val = calculate_ucb(parent_visits, c_visits, c_wins, c_param);
-                 if (val > best_val) {
-                     best_val = val;
-                     best_child_offset = i;
-                 }
+                int child_idx = first_child + i;
+                int c_visits = nodes[child_idx].visits;
+                float c_wins = nodes[child_idx].wins;
+
+                float val = calculate_ucb(parent_visits, c_visits, c_wins, c_param);
+                if (val > best_val) {
+                    best_val = val;
+                    best_child_offset = i;
+                }
             }
 
             if (best_child_offset == -1) {
@@ -284,9 +284,10 @@ __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
 
             if (!processed) {
                 // Warp thingy
-                unsigned int mask = __match_any_sync(__activemask(), (unsigned long long)node_idx);
+                unsigned int mask =
+                    __match_any_sync(__activemask(), (unsigned long long)node_idx);
                 // int leader = __ffs(mask) - 1;
-                
+
                 atomicAdd(&nodes[node_idx].wins, result);
             }
 
@@ -313,10 +314,12 @@ __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
     __syncthreads(); // Wait for all threads to finish their last loop iteration
     if (threadIdx.x == 0) {
         int v = atomicExch(&shared_root_visits, 0);
-        if (v > 0) atomicAdd(&nodes[0].visits, v);
-        
+        if (v > 0)
+            atomicAdd(&nodes[0].visits, v);
+
         float w = atomicExch(&shared_root_wins, 0.0f);
-        if (w != 0.0f) atomicAdd(&nodes[0].wins, w);
+        if (w != 0.0f)
+            atomicAdd(&nodes[0].wins, w);
     }
 
     globalStates[tid] = localState;

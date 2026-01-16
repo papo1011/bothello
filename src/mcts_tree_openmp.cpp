@@ -74,6 +74,7 @@ Node *NodeTreeOMP::expand()
 Move MCTSTreeOMP::get_best_move(Board const &state)
 {
     NodeTreeOMP root(state);
+    bool root_is_black = state.is_black_turn();
 
     auto start_time = std::chrono::steady_clock::now();
 
@@ -91,12 +92,14 @@ Move MCTSTreeOMP::get_best_move(Board const &state)
             }
 
             NodeTreeOMP *node = &root;
+            int depth = 0;
 
             // Selection
             while (!node->is_terminal()) {
                 if (node->is_fully_expanded()) {
                     // No lock needed if fully expanded
                     node = node->best_child();
+                    depth++;
                 } else {
                     node->lock();
                     if (!node->is_fully_expanded()) {
@@ -104,11 +107,13 @@ Move MCTSTreeOMP::get_best_move(Board const &state)
                         Node *new_child = node->expand();
                         node->unlock();
                         node = static_cast<NodeTreeOMP *>(new_child);
+                        depth++;
                         break; // Reached a new node, start simulation
                     } else {
                         // Select
                         node->unlock();
                         node = node->best_child();
+                        depth++;
                     }
                 }
                 if (node == nullptr) {
@@ -122,13 +127,27 @@ Move MCTSTreeOMP::get_best_move(Board const &state)
             }
 
             // Simulation
-            double result = default_policy(node->state);
+            double black_wins = default_policy(node->state);
+            double white_wins = 1.0 - black_wins;
 
-            // Backpropagation
+            // Backpropagation using depth parity (like CUDA version)
+            int d = depth;
             while (node) {
+                // Determine if the player who moved to create this node is black
+                bool mover_is_black;
+                if (d % 2 != 0) {
+                    mover_is_black = root_is_black;
+                } else {
+                    mover_is_black = !root_is_black;
+                }
+
+                // Add wins from the mover's perspective
+                double wins_to_add = mover_is_black ? black_wins : white_wins;
+
                 // With atomics, update is thread-safe without locks
-                node->update(result);
+                node->update(wins_to_add);
                 node = static_cast<NodeTreeOMP *>(node->parent);
+                d--;
             }
 
             thread_iterations++;
@@ -182,11 +201,16 @@ double MCTSTreeOMP::default_policy(Board state)
         current.move(random_move);
     }
 
+    // Return from BLACK's absolute perspective (like CUDA version)
     int my_score, opp_score;
-    state.get_score(my_score, opp_score);
-    if (my_score > opp_score)
+    current.get_score(my_score, opp_score);
+
+    int black_score = current.is_black_turn() ? my_score : opp_score;
+    int white_score = current.is_black_turn() ? opp_score : my_score;
+
+    if (black_score > white_score)
         return 1.0;
-    if (my_score > opp_score)
+    if (white_score > black_score)
         return 0.0;
     return 0.5;
 }

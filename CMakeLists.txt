@@ -43,8 +43,6 @@ endif()
 
 find_package(OpenMP REQUIRED)
 
-# Add NVTX library
-add_subdirectory(c)
 
 # --- Modular Libraries ---
 
@@ -105,6 +103,9 @@ target_link_libraries(bothello_core INTERFACE
 # Determine if we should link NVTX
 set(NVTX_LIB "")
 if(CMAKE_BUILD_TYPE STREQUAL "Profile" OR CMAKE_BUILD_TYPE STREQUAL "Debug")
+    # Add NVTX library
+    add_subdirectory(c)
+
     set(NVTX_LIB nvtx3-cpp)
     add_compile_definitions(USE_NVTX)
     message(STATUS "NVTX Enabled for ${CMAKE_BUILD_TYPE} build")

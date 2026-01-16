@@ -8,6 +8,9 @@
 #include <thread>
 #include <vector>
 
+#include <cstring>
+#include <type_traits>
+
 #define GPU_CHECK(ans)                        \
     {                                         \
         gpuAssert((ans), __FILE__, __LINE__); \
@@ -110,6 +113,10 @@ __global__ void mcts_block_kernel(GpuNode *all_nodes, int *all_node_counts,
                                   int volatile *stop_flag, double c_param,
                                   Board root_state, bool root_is_black)
 {
+    static_assert(std::is_trivially_copyable_v<Board> &&
+                      std::is_trivially_destructible_v<Board>,
+                  "Board must be trivially copyable to be stored in shared raw bytes");
+
     int tid = threadIdx.x;
     int bid = blockIdx.x;
 
@@ -120,7 +127,9 @@ __global__ void mcts_block_kernel(GpuNode *all_nodes, int *all_node_counts,
     curandState localState = globalStates[global_tid];
 
     __shared__ int shared_node_idx;
-    __shared__ Board shared_board;
+
+    __shared__ alignas(Board) unsigned char shared_board_bytes[sizeof(Board)];
+
     __shared__ float block_total_black_wins;
     __shared__ int shared_depth;
 
@@ -164,7 +173,7 @@ __global__ void mcts_block_kernel(GpuNode *all_nodes, int *all_node_counts,
             }
 
             shared_node_idx = node_idx;
-            shared_board = cur_board;
+            std::memcpy(shared_board_bytes, &cur_board, sizeof(Board));
             shared_depth = depth;
         }
         __syncthreads();
@@ -185,15 +194,17 @@ __global__ void mcts_block_kernel(GpuNode *all_nodes, int *all_node_counts,
                 if (new_idx < nodes_per_tree) {
                     (*my_node_count)++;
 
-                    Board next_state = shared_board;
+                    Board next_state;
+                    std::memcpy(&next_state, shared_board_bytes, sizeof(Board));
                     next_state.move(move);
+
                     my_tree[new_idx].init(next_state, node_idx, move);
 
                     my_tree[new_idx].next_sibling = my_tree[node_idx].first_child;
                     my_tree[node_idx].first_child = new_idx;
 
                     shared_node_idx = new_idx;
-                    shared_board = next_state;
+                    std::memcpy(shared_board_bytes, &next_state, sizeof(Board));
                     shared_depth++;
                 }
             }
@@ -201,7 +212,8 @@ __global__ void mcts_block_kernel(GpuNode *all_nodes, int *all_node_counts,
         __syncthreads();
 
         // PARALLEL SIMULATION (All Threads)
-        Board my_board = shared_board;
+        Board my_board;
+        std::memcpy(&my_board, shared_board_bytes, sizeof(Board));
         float my_result = default_policy_block(my_board, &localState);
 
         // reduction (All Threads)
@@ -216,7 +228,7 @@ __global__ void mcts_block_kernel(GpuNode *all_nodes, int *all_node_counts,
             int curr = shared_node_idx;
             float black_wins_batch = block_total_black_wins;
             int visits = blockDim.x;
-            int d = shared_depth; // Profondità corrente (Leaf)
+            int d = shared_depth;
 
             while (curr != -1) {
                 my_tree[curr].visits += visits;

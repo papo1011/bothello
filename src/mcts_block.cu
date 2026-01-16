@@ -1,5 +1,6 @@
 #include "mcts_block.h"
 #include <chrono>
+#include <ctime>
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
 #include <iostream>
@@ -288,9 +289,9 @@ void MCTSBlock::initialize_gpu()
     GPU_CHECK(cudaHostAlloc(&h_stop_flag, sizeof(int), cudaHostAllocMapped));
     GPU_CHECK(cudaHostGetDevicePointer(&d_stop_flag, h_stop_flag, 0));
 
-    int grid_size = (total_threads + 127) / 128;
-    setup_rng_kernel<<<grid_size, 128>>>((curandState *)d_states, time(NULL),
-                                         total_threads);
+    int grid_size = (total_threads + (threads_per_block - 1)) / threads_per_block;
+    setup_rng_kernel<<<grid_size, threads_per_block>>>((curandState *)d_states,
+                                                       time(NULL), total_threads);
     GPU_CHECK(cudaDeviceSynchronize());
 
     is_gpu_initialized = true;
@@ -306,8 +307,9 @@ Move MCTSBlock::get_best_move(Board const &state)
                          cudaMemcpyHostToDevice));
 
     // Initialize Roots for each partition
-    int init_grid = (num_blocks + 127) / 128;
-    init_roots_kernel<<<init_grid, 128>>>(d_nodes, nodes_per_tree, state, num_blocks);
+    int init_grid = (num_blocks + (threads_per_block - 1)) / threads_per_block;
+    init_roots_kernel<<<init_grid, threads_per_block>>>(d_nodes, nodes_per_tree, state,
+                                                        num_blocks);
     GPU_CHECK(cudaGetLastError());
 
     // Reset flag and launch

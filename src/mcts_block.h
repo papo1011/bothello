@@ -1,6 +1,7 @@
 #pragma once
 
 #include "board.h"
+#include "gpu_config.h"
 #include "mcts.h"
 
 struct GpuNode;
@@ -46,9 +47,9 @@ class MCTSBlock : public MCTS {
     int *d_stop_flag = nullptr;
 
     // Conservative configurations to avoid OOM on small GPUs
-    int num_blocks = 128;
-    int threads_per_block = 64;
-    int nodes_per_tree = 10000;
+    int num_blocks = gpu_config::NUM_BLOCKS;
+    int threads_per_block = gpu_config::BLOCK_SIZE;
+    int nodes_per_tree = gpu_config::BLOCK_SIM_NODE_PER_TREE;
 
     void initialize_gpu();
     void free_gpu();

@@ -9,5 +9,8 @@ namespace gpu_config {
 constexpr int BLOCK_SIZE = 256;         // Threads per block (standard warp multiple)
 constexpr int NUM_BLOCKS = 64;          // Number of blocks to launch
 constexpr int LEAF_SIMULATIONS = 16384; // Parallel game simulations per MCTS leaf node
-constexpr int MAX_SIMULATIONS_BUFFER = 100000; // Max curandState buffer size for memory safety
+constexpr int MAX_SIMULATIONS_BUFFER =
+    100000; // Max curandState buffer size for memory safety
+constexpr int BLOCK_SIM_NODE_PER_TREE =
+    10000; // Number of nodes for each block's local tree
 } // namespace gpu_config

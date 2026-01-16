@@ -36,6 +36,4 @@ Testing/
 *.swp
 
 # --- Profiling ---
-*.sqlite
-*.nsys-rep
 c/

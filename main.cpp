@@ -55,9 +55,12 @@ int main()
 
     log << "Initial board:\n" << board << std::endl;
 
+    char* env_max_moves = std::getenv("MAX_MOVES_PROFILING");
+    int limit_moves = (env_max_moves != nullptr) ? std::stoi(env_max_moves) : 100;
+
     BotType mcts(std::chrono::milliseconds(5000));
 
-    int const max_moves = 100;
+    int const max_moves = limit_moves;
     int moves_played = 0;
 
     double pps_move1 = -1.0;

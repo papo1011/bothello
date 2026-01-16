@@ -70,9 +70,19 @@ __device__ int simulate_game_from_leaf(Board state, curandState *localState)
 
 // Kernel that launches n_sims parallel playouts from a leaf node state
 // Each thread simulates one complete game and accumulates Black wins
+// Uses shared memory reduction to minimize global atomic contention
 __global__ void leaf_playout_kernel(Board leaf_state, int n_sims, int *results,
                                     curandState *globalStates)
 {
+    // Shared memory for block-level reduction
+    __shared__ int block_sum;
+    
+    // Initialize shared memory (only one thread per block)
+    if (threadIdx.x == 0) {
+        block_sum = 0;
+    }
+    __syncthreads();
+    
     int id = blockIdx.x * blockDim.x + threadIdx.x;
     if (id < n_sims) {
         // Copy RNG state to local memory
@@ -83,8 +93,16 @@ __global__ void leaf_playout_kernel(Board leaf_state, int n_sims, int *results,
         // Save state back for continuity
         globalStates[id] = localState;
 
-        // Accumulate Black wins atomically
-        atomicAdd(results, result);
+        // First: accumulate within block using shared memory atomic
+        // (much faster than global memory atomic)
+        atomicAdd(&block_sum, result);
+    }
+    __syncthreads();
+    
+    // Only one thread per block writes to global memory
+    // Reduces global atomics from n_sims to (n_sims / blockDim.x)
+    if (threadIdx.x == 0) {
+        atomicAdd(results, block_sum);
     }
 }
 

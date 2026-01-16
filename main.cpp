@@ -55,7 +55,7 @@ int main()
 
     log << "Initial board:\n" << board << std::endl;
 
-    BotType mcts(std::chrono::milliseconds(1000));
+    BotType mcts(std::chrono::milliseconds(5000));
 
     int const max_moves = 100;
     int moves_played = 0;

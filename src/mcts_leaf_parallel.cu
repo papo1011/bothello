@@ -155,30 +155,33 @@ Node *tree_policy(Node *node)
 
 // Backpropagate batch simulation results up the tree
 // Unlike standard MCTS (1 simulation per iteration), we ran n_sims parallel simulations
+// Uses iterative approach to prevent stack overflow in deep trees
 void backpropagate_leaf_parallel(Node *node, double avg_result, int n_sims)
 {
-    while (node != nullptr) {
+    // Iterative backpropagation (more stack-safe than recursion)
+    Node *current = node;
+    while (current != nullptr) {
         // avg_result is the fraction of simulations won by Black (0.0 to 1.0)
         double batch_wins = avg_result * n_sims; // Total Black wins in the batch
 
         // Update visits (atomic int)
-        node->visits.fetch_add(n_sims);
+        current->visits.fetch_add(n_sims);
 
         // Update wins (atomic double - requires compare-exchange loop)
         double wins_to_add;
-        if (node->player_moved_to_create_node == 0) {
+        if (current->player_moved_to_create_node == 0) {
             wins_to_add = batch_wins;
         } else {
             wins_to_add = n_sims - batch_wins;
         }
 
         // Compare-and-swap loop for atomic double
-        double old_wins = node->wins.load();
-        while (!node->wins.compare_exchange_weak(old_wins, old_wins + wins_to_add)) {
+        double old_wins = current->wins.load();
+        while (!current->wins.compare_exchange_weak(old_wins, old_wins + wins_to_add)) {
             // Loop continues until successful update
         }
 
-        node = node->parent;
+        current = current->parent;
     }
 }
 

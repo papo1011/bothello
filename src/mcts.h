@@ -43,8 +43,9 @@ struct Node {
     // Updates the stats for this node
     void update(double result);
 
-    // Virtual destructor to ensure correct destruction of derived types
-    virtual ~Node() = default;
+    // Custom destructor to prevent stack overflow with large trees
+    // (iterative deletion instead of recursive via unique_ptr)
+    virtual ~Node();
 };
 
 class MCTS {

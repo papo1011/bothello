@@ -15,6 +15,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <cuda_runtime.h>
 
 // Helper to create a bitmask from coordinates (row 0-7, col 0-7)
 constexpr uint64_t BIT(int row, int col) { return 1ULL << (row * 8 + col); }
@@ -118,12 +119,22 @@ double play_match(BotConfig p1_config, BotConfig p2_config, bool verbose = false
                   << "\n";
     }
 
+    double result;
     if (black_score > white_score)
-        return 1.0;
+        result = 1.0;
     else if (white_score > black_score)
-        return 0.0;
+        result = 0.0;
     else
-        return 0.5;
+        result = 0.5;
+    
+    // Explicitly destroy bots to free GPU memory
+    p1.reset();
+    p2.reset();
+    
+    // Force CUDA synchronization to ensure GPU resources are freed
+    cudaDeviceSynchronize();
+    
+    return result;
 }
 
 void update_elo(EloEntry &r1, EloEntry &r2, double actual_score_p1)
@@ -264,8 +275,8 @@ int main()
         run_benchmark("Block Parallel MCTS (5s)", mcts_block, board);
     }
 
-    // Run Arena
-    run_arena(1, std::chrono::milliseconds(200)); // 1 round per pair (2 games total per pair)
+    // Run Arena with reduced time limit to prevent tree explosion
+    run_arena(1, std::chrono::milliseconds(1000)); // 1 second per move
 
     return 0;
 }

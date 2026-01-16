@@ -101,6 +101,40 @@ void Node::update(double result)
     }
 }
 
+// Iterative destructor to prevent stack overflow with large trees
+// When a Node with 30K+ children is destroyed, recursive unique_ptr
+// destruction would exhaust stack space. Instead, we manually delete
+// children level-by-level using a queue.
+Node::~Node()
+{
+    // Use a queue to iteratively delete all descendants
+    std::vector<std::unique_ptr<Node>> to_delete;
+    
+    // Move all children out of this node into the deletion queue
+    to_delete.reserve(children.size());
+    for (auto& child : children) {
+        to_delete.push_back(std::move(child));
+    }
+    children.clear();
+    
+    // Process queue: extract children from each node and add to queue
+    while (!to_delete.empty()) {
+        // Pop one node
+        auto node = std::move(to_delete.back());
+        to_delete.pop_back();
+        
+        // Move its children into the queue
+        for (auto& child : node->children) {
+            to_delete.push_back(std::move(child));
+        }
+        node->children.clear();
+        
+        // node's unique_ptr will be destroyed here (just the Node object,
+        // not recursively through children since we cleared them)
+    }
+}
+
+
 MCTS::MCTS(int iterations)
     : iterations(iterations)
     , time_limit(std::chrono::milliseconds::max())

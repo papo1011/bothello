@@ -9,7 +9,7 @@ namespace gpu_config {
 constexpr int BLOCK_SIZE = 256;         // Threads per block (standard warp multiple)
 constexpr int NUM_BLOCKS = 64;          // Number of blocks to launch
 constexpr int LEAF_SIMULATIONS = 65536; // Optimal for RTX 5060
-constexpr int MAX_SIMULATIONS_BUFFER = LEAF_SIMULATIONS * 2;
+constexpr int MAX_SIMULATIONS_BUFFER = LEAF_SIMULATIONS;
 constexpr int BLOCK_SIM_NODE_PER_TREE =
     10000; // Number of nodes for each block's local tree
 

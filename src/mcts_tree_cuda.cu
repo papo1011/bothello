@@ -117,19 +117,23 @@ __device__ float simulate_game_float(Board state, curandState *localState)
         state.move(move);
     }
 
+    // Return from BLACK's absolute perspective (like mcts_block.cu)
     int my_score, opp_score;
     state.get_score(my_score, opp_score);
 
-    if (my_score > opp_score)
+    int black_score = state.is_black_turn() ? my_score : opp_score;
+    int white_score = state.is_black_turn() ? opp_score : my_score;
+
+    if (black_score > white_score)
         return 1.0f;
-    if (my_score < opp_score)
+    if (white_score > black_score)
         return 0.0f;
     return 0.5f;
 }
 
 __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
                             curandState *globalStates, int volatile *stop_flag,
-                            double c_param, Board root_state)
+                            double c_param, Board root_state, bool root_is_black)
 {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     curandState localState = globalStates[tid];
@@ -147,6 +151,7 @@ __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
     while (*stop_flag == 0) {
         int node_idx = 0; // Root is always at index 0
         Board cur_board = root_state;
+        int depth = 0; // Track depth for player perspective
 
         // Virtual Loss (Root)
         atomicAdd(&shared_root_visits, 1);
@@ -268,31 +273,46 @@ __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
             Move move = (move_i == 64) ? 0 : (1ULL << move_i);
             cur_board.move(move);
             node_idx = best_child_idx;
+            depth++;
         }
 
     simulation:
-        float result = simulate_game_float(cur_board, &localState);
+        float black_wins = simulate_game_float(cur_board, &localState);
+        float white_wins = 1.0f - black_wins;
 
+        // Backpropagation using depth parity (like mcts_block.cu)
+        int d = depth; // Current depth at leaf
         while (node_idx != -1) {
+            // Determine if the player who moved to create this node is black
+            bool mover_is_black;
+            if (d % 2 != 0) {
+                mover_is_black = root_is_black;
+            } else {
+                mover_is_black = !root_is_black;
+            }
+
+            // Add wins from the mover's perspective
+            float wins_to_add = mover_is_black ? black_wins : white_wins;
+
             bool processed = false;
 
             // Shared Memory Accumulation for Root
             if (node_idx == 0) {
                 // Visits were handled with Virtual Loss (start of loop)
-                atomicAdd(&shared_root_wins, result);
+                atomicAdd(&shared_root_wins, wins_to_add);
                 processed = true;
             }
 
             if (!processed) {
-                // Warp thingy
+                // Warp coalescing optimization
                 unsigned int mask =
                     __match_any_sync(__activemask(), (unsigned long long)node_idx);
-                // int leader = __ffs(mask) - 1;
 
-                atomicAdd(&nodes[node_idx].wins, result);
+                atomicAdd(&nodes[node_idx].wins, wins_to_add);
             }
 
             node_idx = nodes[node_idx].parent;
+            d--;
         }
 
         // Flush logic: Periodically flush shared memory to global.
@@ -401,8 +421,10 @@ Move MCTSTree::get_best_move(Board const &state)
     // Run MCTS
     auto start_time = std::chrono::steady_clock::now();
 
+    bool root_is_black = state.is_black_turn();
+
     mcts_kernel<<<gpu_config::NUM_BLOCKS, gpu_config::BLOCK_SIZE>>>(d_nodes, d_node_count, max_nodes,
-                                 (curandState *)d_states, d_stop_flag, 1.414, state);
+                                 (curandState *)d_states, d_stop_flag, 1.414, state, root_is_black);
 
     // Wait for time limit
     while (true) {

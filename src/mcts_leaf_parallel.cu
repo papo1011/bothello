@@ -252,13 +252,13 @@ Move MCTSLeafParallel::get_best_move(Board const &state)
     last_duration_seconds = elapsed.count();
 
     // Print performance metrics
-    int total_sims = total_leaves_evaluated * gpu_config::LEAF_SIMULATIONS;
-    double time_per_leaf_ms =
-        (last_duration_seconds * 1000.0) / std::max(1, total_leaves_evaluated);
-    std::cout << "Leaf-Parallel MCTS Performance: " << total_leaves_evaluated
-              << " leaves evaluated, " << total_sims << " total simulations, "
-              << time_per_leaf_ms << " ms/leaf, " << get_pps() << " playouts/sec"
-              << std::endl;
+    // int total_sims = total_leaves_evaluated * gpu_config::LEAF_SIMULATIONS;
+    // double time_per_leaf_ms =
+    //     (last_duration_seconds * 1000.0) / std::max(1, total_leaves_evaluated);
+    // std::cout << "Leaf-Parallel MCTS Performance: " << total_leaves_evaluated
+    //           << " leaves evaluated, " << total_sims << " total simulations, "
+    //           << time_per_leaf_ms << " ms/leaf, " << get_pps() << " playouts/sec"
+    //           << std::endl;
 
     // Select best move based on visit count
     Node *best_node = nullptr;

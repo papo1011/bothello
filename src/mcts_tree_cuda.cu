@@ -136,25 +136,29 @@ __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
                             double c_param, Board root_state, bool root_is_black)
 {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    int lane = threadIdx.x % 32;
     curandState localState = globalStates[tid];
 
     // Shared variables for the root node to reduce contention
-    __shared__ int shared_root_visits;
-    __shared__ float shared_root_wins;
+    __shared__ int shared_root_visits[8]; // One per warp (max 8 warps in 256 threads)
+    __shared__ float shared_root_wins[8];
+    int warp_idx = threadIdx.x / 32;
 
-    if (threadIdx.x == 0) {
-        shared_root_visits = 0;
-        shared_root_wins = 0.0f;
+    if (lane == 0) {
+        shared_root_visits[warp_idx] = 0;
+        shared_root_wins[warp_idx] = 0.0f;
     }
     __syncthreads();
 
     while (*stop_flag == 0) {
         int node_idx = 0; // Root is always at index 0
         Board cur_board = root_state;
-        int depth = 0; // Track depth for player perspective
+        int depth = 0;
 
         // Virtual Loss (Root)
-        atomicAdd(&shared_root_visits, 1);
+        if (lane == 0) {
+            atomicAdd(&shared_root_visits[warp_idx], 1);
+        }
 
         while (true) {
             if (nodes[node_idx].is_terminal) {
@@ -164,111 +168,105 @@ __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
             int first_child = nodes[node_idx].first_child;
 
             // EXPANSION PHASE: "Expand All" strategy
-            // If not expanded (-1), try to expand.
             if (first_child == -1) {
-                // Attempt to lock the node for expansion
-                int old = atomicCAS(&nodes[node_idx].first_child, -1, -2);
+                // Only lane 0 attempts to lock
+                int old = -3;
+                if (lane == 0) {
+                    old = atomicCAS(&nodes[node_idx].first_child, -1, -2);
+                }
+                old = __shfl_sync(0xffffffff, old, 0);
 
                 if (old == -1) {
-                    // WE ARE THE EXPANDER
-                    MoveList untried = cur_board.list_available_legal_moves();
-                    int n_moves = Board::count_moves(untried);
-                    bool is_pass = (n_moves == 0); // Implicit pass if not terminal
-                    int needed_nodes = is_pass ? 1 : n_moves;
+                    // WE ARE THE EXPANDER (Lane 0 handles memory)
+                    int start_idx = -1;
+                    int needed_nodes = 0;
+                    bool is_pass = false;
 
-                    int start_idx = atomicAdd(node_count, needed_nodes);
-                    if (start_idx + needed_nodes > max_nodes) {
-                        nodes[node_idx].first_child = -1;
-                        goto simulation;
-                    }
+                    if (lane == 0) {
+                        MoveList untried = cur_board.list_available_legal_moves();
+                        int n_moves = Board::count_moves(untried);
+                        is_pass = (n_moves == 0);
+                        needed_nodes = is_pass ? 1 : n_moves;
 
-                    // Initialize all children in contiguous memory
-                    if (is_pass) {
-                        // Create one child representing PASS
-                        Board next_state = cur_board;
-                        next_state.move(0);
-                        nodes[start_idx].init(next_state, node_idx, 0);
-                        // Virtual Loss: First visitor visits this new node immediately
-                        nodes[start_idx].visits = 1;
-                    } else {
-                        // Create children for all moves
-                        int child_offset = 0;
-                        MoveList temp_moves = untried;
-                        while (temp_moves != 0) {
-#ifdef __CUDA_ARCH__
-                            int idx = __ffsll(temp_moves) - 1;
-#else
-                            int idx = __builtin_ffsll(temp_moves) - 1;
-#endif
-                            Move move = (1ULL << idx);
-                            temp_moves &= ~move;
-
-                            Board next_state = cur_board;
-                            next_state.move(move);
-
-                            nodes[start_idx + child_offset].init(next_state, node_idx,
-                                                                 move);
-
-                            child_offset++;
+                        start_idx = atomicAdd(node_count, needed_nodes);
+                        if (start_idx + needed_nodes > max_nodes) {
+                            nodes[node_idx].first_child = -1;
+                            start_idx = -1;
                         }
                     }
+                    start_idx = __shfl_sync(0xffffffff, start_idx, 0);
+                    needed_nodes = __shfl_sync(0xffffffff, needed_nodes, 0);
+                    is_pass = __shfl_sync(0xffffffff, is_pass, 0);
 
-                    nodes[node_idx].num_children = (uint8_t)needed_nodes;
-                    __threadfence(); // Ensure children are visible
-                    nodes[node_idx].first_child = start_idx; // Unlock and publish
+                    if (start_idx == -1)
+                        goto simulation;
 
-                    // Fall through to selection.
+                    // Root's turn info for init
+                    if (lane == 0) {
+                        if (is_pass) {
+                            Board next_state = cur_board;
+                            next_state.move(0);
+                            nodes[start_idx].init(next_state, node_idx, 0);
+                            nodes[start_idx].visits = 1;
+                        } else {
+                            MoveList untried = cur_board.list_available_legal_moves();
+                            int child_offset = 0;
+                            while (untried != 0) {
+                                int idx = __ffsll(untried) - 1;
+                                Move move = (1ULL << idx);
+                                untried &= ~move;
+
+                                Board next_state = cur_board;
+                                next_state.move(move);
+                                nodes[start_idx + child_offset].init(next_state, node_idx,
+                                                                     move);
+                                child_offset++;
+                            }
+                        }
+                        nodes[node_idx].num_children = (uint8_t)needed_nodes;
+                        __threadfence();
+                        nodes[node_idx].first_child = start_idx;
+                    }
                     first_child = start_idx;
                 } else if (old == -2) {
-                    // Someone else is expanding.
-                    // We treat this node as a leaf for this simulation to avoid
-                    // spinning.
                     goto simulation;
                 } else {
-                    // Already expanded by someone else between our check and CAS
                     first_child = old;
                 }
             }
 
-            // Check again for -2 if we fell through
             if (first_child == -2)
                 goto simulation;
 
-            // SELECTION PHASE
-            int num_children = nodes[node_idx].num_children;
-            int best_child_offset = -1;
-            float best_val = -1e20f;
-            int parent_visits = nodes[node_idx].visits;
+            // SELECTION PHASE (Lane 0 computes best, then broadcasts)
+            int best_child_idx = -1;
+            if (lane == 0) {
+                int num_children = nodes[node_idx].num_children;
+                int best_offset = -1;
+                float best_val = -1e20f;
+                int parent_visits = nodes[node_idx].visits;
+                parent_visits += atomicAdd(&shared_root_visits[warp_idx], 0);
 
-            // Use shared memory values for root if we are at root
-            if (node_idx == 0) {
-                parent_visits += atomicAdd(&shared_root_visits, 0);
-            }
-
-            // Iterate contiguous children
-            for (int i = 0; i < num_children; i++) {
-                int child_idx = first_child + i;
-                int c_visits = nodes[child_idx].visits;
-                float c_wins = nodes[child_idx].wins;
-
-                float val = calculate_ucb(parent_visits, c_visits, c_wins, c_param);
-                if (val > best_val) {
-                    best_val = val;
-                    best_child_offset = i;
+                for (int i = 0; i < num_children; i++) {
+                    int child_idx = first_child + i;
+                    float val = calculate_ucb(parent_visits, nodes[child_idx].visits,
+                                              nodes[child_idx].wins, c_param);
+                    if (val > best_val) {
+                        best_val = val;
+                        best_offset = i;
+                    }
+                }
+                if (best_offset != -1) {
+                    best_child_idx = first_child + best_offset;
+                    atomicAdd(&nodes[best_child_idx].visits, 1);
                 }
             }
+            best_child_idx = __shfl_sync(0xffffffff, best_child_idx, 0);
 
-            if (best_child_offset == -1) {
-                // Should not happen
+            if (best_child_idx == -1)
                 break;
-            }
 
-            int best_child_idx = first_child + best_child_offset;
-
-            // Virtual Loss: Update child visits immediately
-            atomicAdd(&nodes[best_child_idx].visits, 1);
-
-            // Update board and descend
+            // Update board logic (All threads keep board in sync)
             int move_i = nodes[best_child_idx].move_idx;
             Move move = (move_i == 64) ? 0 : (1ULL << move_i);
             cur_board.move(move);
@@ -277,13 +275,20 @@ __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
         }
 
     simulation:
+        // PARALLEL SIMULATION: All 32 threads in warp simulate
         float black_wins = simulate_game_float(cur_board, &localState);
-        float white_wins = 1.0f - black_wins;
 
-        // Backpropagation using depth parity (like mcts_block.cu)
-        int d = depth; // Current depth at leaf
-        while (node_idx != -1) {
-            // Determine if the player who moved to create this node is black
+        // BACKPROPAGATION: Warp reduction
+        for (int offset = 16; offset > 0; offset /= 2) {
+            black_wins += __shfl_down_sync(0xffffffff, black_wins, offset);
+        }
+        // Lane 0 now has the sum of all 32 simulation results
+        float warp_total_black_wins = __shfl_sync(0xffffffff, black_wins, 0);
+        int warp_visits = 32;
+
+        int d = depth;
+        int curr = node_idx;
+        while (curr != -1) {
             bool mover_is_black;
             if (d % 2 != 0) {
                 mover_is_black = root_is_black;
@@ -291,54 +296,43 @@ __global__ void mcts_kernel(GpuNode *nodes, int *node_count, int max_nodes,
                 mover_is_black = !root_is_black;
             }
 
-            // Add wins from the mover's perspective
-            float wins_to_add = mover_is_black ? black_wins : white_wins;
+            float wins_to_add = mover_is_black ? warp_total_black_wins
+                                               : (warp_visits - warp_total_black_wins);
 
-            bool processed = false;
-
-            // Shared Memory Accumulation for Root
-            if (node_idx == 0) {
-                // Visits were handled with Virtual Loss (start of loop)
-                atomicAdd(&shared_root_wins, wins_to_add);
-                processed = true;
+            if (lane == 0) {
+                if (curr == 0) {
+                    atomicAdd(&shared_root_wins[warp_idx], wins_to_add);
+                } else {
+                    atomicAdd(&nodes[curr].wins, wins_to_add);
+                    // visits were already handled with Virtual Loss (but only by 1,
+                    // we need to add the other 31)
+                    atomicAdd(&nodes[curr].visits, warp_visits - 1);
+                }
             }
 
-            if (!processed) {
-                // Warp coalescing optimization
-                unsigned int mask =
-                    __match_any_sync(__activemask(), (unsigned long long)node_idx);
-
-                atomicAdd(&nodes[node_idx].wins, wins_to_add);
-            }
-
-            node_idx = nodes[node_idx].parent;
+            curr = nodes[curr].parent;
             d--;
         }
 
-        // Flush logic: Periodically flush shared memory to global.
-        // We do this check at the end of every simulation loop.
-        // Thread 0 of the block handles the flush.
-        if (threadIdx.x == 0) {
-            int v = atomicExch(&shared_root_visits, 0);
-            if (v > 0) {
+        // Periodically flush shared memory to global
+        if (lane == 0) {
+            int v = atomicExch(&shared_root_visits[warp_idx], 0);
+            if (v > 0)
                 atomicAdd(&nodes[0].visits, v);
-            }
 
-            float w = atomicExch(&shared_root_wins, 0.0f);
-            if (w != 0.0f) {
+            float w = atomicExch(&shared_root_wins[warp_idx], 0.0f);
+            if (w != 0.0f)
                 atomicAdd(&nodes[0].wins, w);
-            }
         }
     }
 
-    // Final flush on kernel exit
-    __syncthreads(); // Wait for all threads to finish their last loop iteration
-    if (threadIdx.x == 0) {
-        int v = atomicExch(&shared_root_visits, 0);
+    __syncthreads();
+    if (lane == 0) {
+        int v = atomicExch(&shared_root_visits[warp_idx], 0);
         if (v > 0)
             atomicAdd(&nodes[0].visits, v);
 
-        float w = atomicExch(&shared_root_wins, 0.0f);
+        float w = atomicExch(&shared_root_wins[warp_idx], 0.0f);
         if (w != 0.0f)
             atomicAdd(&nodes[0].wins, w);
     }

@@ -37,3 +37,6 @@ Testing/
 
 # --- Profiling ---
 c/
+
+# --- Javascript ---
+node_modules/

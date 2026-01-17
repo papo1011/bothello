@@ -1,0 +1,84 @@
+Collecting data...
+Generating '/tmp/nsys-report-12d2.qdstrm'
+Press Ctrl-C to stop symbol files downloading
+[1/8] [0%                          ] bothello_block_profile.nsys-rep[1/8] [0%                          ] bothello_block_profile.nsys-rep[1/8] [===23%                      ] bothello_block_profile.nsys-rep[1/8] [=======36%                  ] bothello_block_profile.nsys-rep[1/8] [==========49%               ] bothello_block_profile.nsys-rep[1/8] [===========50%              ] bothello_block_profile.nsys-rep[1/8] [===========51%              ] bothello_block_profile.nsys-rep[1/8] [===========52%              ] bothello_block_profile.nsys-rep[1/8] [=================74%        ] bothello_block_profile.nsys-rep[1/8] [=====================86%    ] bothello_block_profile.nsys-rep[1/8] [=====================87%    ] bothello_block_profile.nsys-rep[1/8] [========================100%] bothello_block_profile.nsys-rep[1/8] [========================100%] bothello_block_profile.nsys-rep
+[2/8] [0%                          ] bothello_block_profile.sqlite[2/8] [1%                          ] bothello_block_profile.sqlite[2/8] [2%                          ] bothello_block_profile.sqlite[2/8] [3%                          ] bothello_block_profile.sqlite[2/8] [4%                          ] bothello_block_profile.sqlite[2/8] [5%                          ] bothello_block_profile.sqlite[2/8] [6%                          ] bothello_block_profile.sqlite[2/8] [7%                          ] bothello_block_profile.sqlite[2/8] [8%                          ] bothello_block_profile.sqlite[2/8] [9%                          ] bothello_block_profile.sqlite[2/8] [10%                         ] bothello_block_profile.sqlite[2/8] [11%                         ] bothello_block_profile.sqlite[2/8] [12%                         ] bothello_block_profile.sqlite[2/8] [13%                         ] bothello_block_profile.sqlite[2/8] [14%                         ] bothello_block_profile.sqlite[2/8] [=15%                        ] bothello_block_profile.sqlite[2/8] [=16%                        ] bothello_block_profile.sqlite[2/8] [=17%                        ] bothello_block_profile.sqlite[2/8] [==18%                       ] bothello_block_profile.sqlite[2/8] [==19%                       ] bothello_block_profile.sqlite[2/8] [==20%                       ] bothello_block_profile.sqlite[2/8] [==21%                       ] bothello_block_profile.sqlite[2/8] [===22%                      ] bothello_block_profile.sqlite[2/8] [===23%                      ] bothello_block_profile.sqlite[2/8] [===24%                      ] bothello_block_profile.sqlite[2/8] [====25%                     ] bothello_block_profile.sqlite[2/8] [====26%                     ] bothello_block_profile.sqlite[2/8] [====27%                     ] bothello_block_profile.sqlite[2/8] [====28%                     ] bothello_block_profile.sqlite[2/8] [=====29%                    ] bothello_block_profile.sqlite[2/8] [=====30%                    ] bothello_block_profile.sqlite[2/8] [=====31%                    ] bothello_block_profile.sqlite[2/8] [=====32%                    ] bothello_block_profile.sqlite[2/8] [======33%                   ] bothello_block_profile.sqlite[2/8] [======34%                   ] bothello_block_profile.sqlite[2/8] [======35%                   ] bothello_block_profile.sqlite[2/8] [=======36%                  ] bothello_block_profile.sqlite[2/8] [=======37%                  ] bothello_block_profile.sqlite[2/8] [=======38%                  ] bothello_block_profile.sqlite[2/8] [=======39%                  ] bothello_block_profile.sqlite[2/8] [========40%                 ] bothello_block_profile.sqlite[2/8] [========41%                 ] bothello_block_profile.sqlite[2/8] [========42%                 ] bothello_block_profile.sqlite[2/8] [=========43%                ] bothello_block_profile.sqlite[2/8] [=========44%                ] bothello_block_profile.sqlite[2/8] [=========45%                ] bothello_block_profile.sqlite[2/8] [=========46%                ] bothello_block_profile.sqlite[2/8] [==========47%               ] bothello_block_profile.sqlite[2/8] [==========48%               ] bothello_block_profile.sqlite[2/8] [==========49%               ] bothello_block_profile.sqlite[2/8] [===========50%              ] bothello_block_profile.sqlite[2/8] [===========51%              ] bothello_block_profile.sqlite[2/8] [===========52%              ] bothello_block_profile.sqlite[2/8] [===========53%              ] bothello_block_profile.sqlite[2/8] [============54%             ] bothello_block_profile.sqlite[2/8] [============55%             ] bothello_block_profile.sqlite[2/8] [============56%             ] bothello_block_profile.sqlite[2/8] [============57%             ] bothello_block_profile.sqlite[2/8] [=============58%            ] bothello_block_profile.sqlite[2/8] [=============59%            ] bothello_block_profile.sqlite[2/8] [=============60%            ] bothello_block_profile.sqlite[2/8] [==============61%           ] bothello_block_profile.sqlite[2/8] [==============62%           ] bothello_block_profile.sqlite[2/8] [==============63%           ] bothello_block_profile.sqlite[2/8] [==============64%           ] bothello_block_profile.sqlite[2/8] [===============65%          ] bothello_block_profile.sqlite[2/8] [===============66%          ] bothello_block_profile.sqlite[2/8] [===============67%          ] bothello_block_profile.sqlite[2/8] [================68%         ] bothello_block_profile.sqlite[2/8] [================69%         ] bothello_block_profile.sqlite[2/8] [================70%         ] bothello_block_profile.sqlite[2/8] [================71%         ] bothello_block_profile.sqlite[2/8] [=================72%        ] bothello_block_profile.sqlite[2/8] [=================73%        ] bothello_block_profile.sqlite[2/8] [=================74%        ] bothello_block_profile.sqlite[2/8] [==================75%       ] bothello_block_profile.sqlite[2/8] [==================76%       ] bothello_block_profile.sqlite[2/8] [==================77%       ] bothello_block_profile.sqlite[2/8] [==================78%       ] bothello_block_profile.sqlite[2/8] [===================79%      ] bothello_block_profile.sqlite[2/8] [===================80%      ] bothello_block_profile.sqlite[2/8] [===================81%      ] bothello_block_profile.sqlite[2/8] [===================82%      ] bothello_block_profile.sqlite[2/8] [====================83%     ] bothello_block_profile.sqlite[2/8] [====================84%     ] bothello_block_profile.sqlite[2/8] [====================85%     ] bothello_block_profile.sqlite[2/8] [=====================86%    ] bothello_block_profile.sqlite[2/8] [=====================87%    ] bothello_block_profile.sqlite[2/8] [=====================88%    ] bothello_block_profile.sqlite[2/8] [=====================89%    ] bothello_block_profile.sqlite[2/8] [======================90%   ] bothello_block_profile.sqlite[2/8] [======================91%   ] bothello_block_profile.sqlite[2/8] [======================92%   ] bothello_block_profile.sqlite[2/8] [=======================93%  ] bothello_block_profile.sqlite[2/8] [=======================94%  ] bothello_block_profile.sqlite[2/8] [=======================95%  ] bothello_block_profile.sqlite[2/8] [=======================96%  ] bothello_block_profile.sqlite[2/8] [========================97% ] bothello_block_profile.sqlite[2/8] [========================98% ] bothello_block_profile.sqlite[2/8] [========================99% ] bothello_block_profile.sqlite[2/8] [========================100%] bothello_block_profile.sqlite[2/8] [========================100%] bothello_block_profile.sqlite
+[3/8] Executing 'nvtx_sum' stats report
+
+ Time (%)  Total Time (ns)  Instances    Avg (ns)      Med (ns)     Min (ns)    Max (ns)   StdDev (ns)   Style       Range     
+ --------  ---------------  ---------  ------------  ------------  ----------  ----------  -----------  -------  --------------
+    100.0       5400268524          1  5400268524.0  5400268524.0  5400268524  5400268524          0.0  PushPop  :get_best_move
+
+[4/8] Executing 'osrt_sum' stats report
+
+ Time (%)  Total Time (ns)  Num Calls   Avg (ns)     Med (ns)    Min (ns)    Max (ns)   StdDev (ns)            Name         
+ --------  ---------------  ---------  -----------  -----------  ---------  ----------  ------------  ----------------------
+     50.8      14531264669        533   27263160.7   10095884.0       1931   262222734    36559510.9  poll                  
+     31.5       9001009861         11  818273623.7  500083233.0  500069771  4000016926  1055264872.1  pthread_cond_timedwait
+     17.4       4993183991        494   10107659.9   10092508.0   10041160    10852326       49305.1  nanosleep             
+      0.3         87592684        460     190418.9       9224.0       1192    17748647      894466.7  ioctl                 
+      0.0          2222896         10     222289.6      63069.0      10999      863300      340371.2  sem_timedwait         
+      0.0          1341144         25      53645.8       6787.0       3042      892791      176653.6  mmap64                
+      0.0           739777         16      46236.1      10196.0       2047      549906      135141.1  mmap                  
+      0.0           331891          4      82972.8      87245.0      53926      103475       22837.8  pthread_create        
+      0.0           189979         27       7036.3       2961.0       1118       57366       11214.7  fopen                 
+      0.0           184608         43       4293.2       2537.0       1469       15246        3581.4  open64                
+      0.0           134001          1     134001.0     134001.0     134001      134001           0.0  pthread_cond_wait     
+      0.0           115811         21       5514.8       4570.0       1118       19455        4190.2  fclose                
+      0.0           112940         16       7058.8       3548.0       1547       49067       11907.9  write                 
+      0.0            35387          4       8846.8       7155.5       4663       16413        5196.8  munmap                
+      0.0            34309          1      34309.0      34309.0      34309       34309           0.0  fgets                 
+      0.0            28669          6       4778.2       3950.5       1242       12565        4091.7  open                  
+      0.0            26500          2      13250.0      13250.0      12155       14345        1548.6  fread                 
+      0.0            18254          6       3042.3       3069.0       1268        4769        1584.5  close                 
+      0.0            13945          4       3486.3       3344.5       1281        5975        2152.8  pipe2                 
+      0.0            12879          2       6439.5       6439.5       5768        7111         949.6  socket                
+      0.0            11125          6       1854.2       1340.5       1189        3188         911.4  read                  
+      0.0            10549          1      10549.0      10549.0      10549       10549           0.0  connect               
+      0.0             6795          6       1132.5       1128.0       1020        1284         105.7  fcntl                 
+      0.0             3720          2       1860.0       1860.0       1181        2539         960.3  fwrite                
+      0.0             3016          1       3016.0       3016.0       3016        3016           0.0  pthread_cond_broadcast
+      0.0             2280          1       2280.0       2280.0       2280        2280           0.0  bind                  
+      0.0             1356          1       1356.0       1356.0       1356        1356           0.0  fflush                
+
+[5/8] Executing 'cuda_api_sum' stats report
+
+ Time (%)  Total Time (ns)  Num Calls   Avg (ns)   Med (ns)   Min (ns)  Max (ns)  StdDev (ns)           Name         
+ --------  ---------------  ---------  ----------  ---------  --------  --------  -----------  ----------------------
+     89.0         95140026          3  31713342.0    47323.0      4727  95087976   54884047.1  cudaMalloc            
+      4.2          4514379        321     14063.5    13410.0     10023    172369      10911.4  cudaMemcpy            
+      2.9          3120599          2   1560299.5  1560299.5    305475   2815124    1774589.8  cudaDeviceSynchronize 
+      1.0          1022232          3    340744.0    52877.0     30461    938894     518134.3  cudaLaunchKernel      
+      0.8           828445          3    276148.3   298049.0     19827    510569     246102.9  cudaFree              
+      0.8           821216          1    821216.0   821216.0    821216    821216          0.0  cudaFreeHost          
+      0.7           726781          1    726781.0   726781.0    726781    726781          0.0  cudaHostAlloc         
+      0.7           708094          1    708094.0   708094.0    708094    708094          0.0  cuLibraryLoadData     
+      0.0             4120          1      4120.0     4120.0      4120      4120          0.0  cuModuleGetLoadingMode
+      0.0             1359          3       453.0      607.0       133       619        277.2  cuKernelGetName       
+      0.0             1243          3       414.3      412.0       273       558        142.5  cuLibraryGetKernel    
+
+[6/8] Executing 'cuda_gpu_kern_sum' stats report
+
+ Time (%)  Total Time (ns)  Instances    Avg (ns)      Med (ns)     Min (ns)    Max (ns)   StdDev (ns)                                                 Name                                               
+ --------  ---------------  ---------  ------------  ------------  ----------  ----------  -----------  --------------------------------------------------------------------------------------------------
+    100.0       5002852708          1  5002852708.0  5002852708.0  5002852708  5002852708          0.0  mcts_block_kernel(GpuNode *, int *, int, curandStateXORWOW *, volatile int *, double, Board, bool)
+      0.0           307842          1      307842.0      307842.0      307842      307842          0.0  setup_rng_kernel(curandStateXORWOW *, unsigned long, int)                                         
+      0.0            14720          1       14720.0       14720.0       14720       14720          0.0  init_roots_kernel(GpuNode *, int, Board, int)                                                     
+
+[7/8] Executing 'cuda_gpu_mem_time_sum' stats report
+
+ Time (%)  Total Time (ns)  Count  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)           Operation          
+ --------  ---------------  -----  --------  --------  --------  --------  -----------  ----------------------------
+     99.9           265316    320     829.1     832.0       704      1056         41.7  [CUDA memcpy Device-to-Host]
+      0.1              352      1     352.0     352.0       352       352          0.0  [CUDA memcpy Host-to-Device]
+
+[8/8] Executing 'cuda_gpu_mem_size_sum' stats report
+
+ Total (MB)  Count  Avg (MB)  Med (MB)  Min (MB)  Max (MB)  StdDev (MB)           Operation          
+ ----------  -----  --------  --------  --------  --------  -----------  ----------------------------
+      0.013    320     0.000     0.000     0.000     0.000        0.000  [CUDA memcpy Device-to-Host]
+      0.000      1     0.000     0.000     0.000     0.000        0.000  [CUDA memcpy Host-to-Device]
+
+Generated:
+	/home/niccolo/Torino/GPU/bothello/profiling/nsys/bothello_block_profile.nsys-rep
+	/home/niccolo/Torino/GPU/bothello/profiling/nsys/bothello_block_profile.sqlite

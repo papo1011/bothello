@@ -1,0 +1,4 @@
+==PROF== Connected to process 36977 (/home/niccolo/Torino/GPU/bothello/build/bothello_leaf)
+==PROF== Profiling "setup_kernel" - 0 (1/1): 0%....50%....100% - 44 passes
+==PROF== Disconnected from process 36977
+==PROF== Report: /home/niccolo/Torino/GPU/bothello/profiling/ncu/bothello_leaf_ncu_report.ncu-rep

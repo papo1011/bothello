@@ -1,0 +1,80 @@
+Collecting data...
+Generating '/tmp/nsys-report-42c9.qdstrm'
+Press Ctrl-C to stop symbol files downloading
+[1/8] [0%                          ] bothello_leaf_profile.nsys-rep[1/8] [0%                          ] bothello_leaf_profile.nsys-rep[1/8] [=====31%                    ] bothello_leaf_profile.nsys-rep[1/8] [=======37%                  ] bothello_leaf_profile.nsys-rep[1/8] [========42%                 ] bothello_leaf_profile.nsys-rep[1/8] [=========43%                ] bothello_leaf_profile.nsys-rep[1/8] [=========44%                ] bothello_leaf_profile.nsys-rep[1/8] [=========46%                ] bothello_leaf_profile.nsys-rep[1/8] [============57%             ] bothello_leaf_profile.nsys-rep[1/8] [=============58%            ] bothello_leaf_profile.nsys-rep[1/8] [================69%         ] bothello_leaf_profile.nsys-rep[1/8] [==================78%       ] bothello_leaf_profile.nsys-rep[1/8] [=====================87%    ] bothello_leaf_profile.nsys-rep[1/8] [========================100%] bothello_leaf_profile.nsys-rep[1/8] [========================100%] bothello_leaf_profile.nsys-rep
+[2/8] [0%                          ] bothello_leaf_profile.sqlite[2/8] [1%                          ] bothello_leaf_profile.sqlite[2/8] [2%                          ] bothello_leaf_profile.sqlite[2/8] [3%                          ] bothello_leaf_profile.sqlite[2/8] [4%                          ] bothello_leaf_profile.sqlite[2/8] [5%                          ] bothello_leaf_profile.sqlite[2/8] [6%                          ] bothello_leaf_profile.sqlite[2/8] [7%                          ] bothello_leaf_profile.sqlite[2/8] [8%                          ] bothello_leaf_profile.sqlite[2/8] [9%                          ] bothello_leaf_profile.sqlite[2/8] [10%                         ] bothello_leaf_profile.sqlite[2/8] [11%                         ] bothello_leaf_profile.sqlite[2/8] [12%                         ] bothello_leaf_profile.sqlite[2/8] [13%                         ] bothello_leaf_profile.sqlite[2/8] [14%                         ] bothello_leaf_profile.sqlite[2/8] [=15%                        ] bothello_leaf_profile.sqlite[2/8] [=16%                        ] bothello_leaf_profile.sqlite[2/8] [=17%                        ] bothello_leaf_profile.sqlite[2/8] [==18%                       ] bothello_leaf_profile.sqlite[2/8] [==19%                       ] bothello_leaf_profile.sqlite[2/8] [==20%                       ] bothello_leaf_profile.sqlite[2/8] [==21%                       ] bothello_leaf_profile.sqlite[2/8] [===22%                      ] bothello_leaf_profile.sqlite[2/8] [===23%                      ] bothello_leaf_profile.sqlite[2/8] [===24%                      ] bothello_leaf_profile.sqlite[2/8] [====25%                     ] bothello_leaf_profile.sqlite[2/8] [====26%                     ] bothello_leaf_profile.sqlite[2/8] [====27%                     ] bothello_leaf_profile.sqlite[2/8] [====28%                     ] bothello_leaf_profile.sqlite[2/8] [=====29%                    ] bothello_leaf_profile.sqlite[2/8] [=====30%                    ] bothello_leaf_profile.sqlite[2/8] [=====31%                    ] bothello_leaf_profile.sqlite[2/8] [=====32%                    ] bothello_leaf_profile.sqlite[2/8] [======33%                   ] bothello_leaf_profile.sqlite[2/8] [======34%                   ] bothello_leaf_profile.sqlite[2/8] [======35%                   ] bothello_leaf_profile.sqlite[2/8] [=======36%                  ] bothello_leaf_profile.sqlite[2/8] [=======37%                  ] bothello_leaf_profile.sqlite[2/8] [=======38%                  ] bothello_leaf_profile.sqlite[2/8] [=======39%                  ] bothello_leaf_profile.sqlite[2/8] [========40%                 ] bothello_leaf_profile.sqlite[2/8] [========41%                 ] bothello_leaf_profile.sqlite[2/8] [========42%                 ] bothello_leaf_profile.sqlite[2/8] [=========43%                ] bothello_leaf_profile.sqlite[2/8] [=========44%                ] bothello_leaf_profile.sqlite[2/8] [=========45%                ] bothello_leaf_profile.sqlite[2/8] [=========46%                ] bothello_leaf_profile.sqlite[2/8] [==========47%               ] bothello_leaf_profile.sqlite[2/8] [==========48%               ] bothello_leaf_profile.sqlite[2/8] [==========49%               ] bothello_leaf_profile.sqlite[2/8] [===========50%              ] bothello_leaf_profile.sqlite[2/8] [===========51%              ] bothello_leaf_profile.sqlite[2/8] [===========52%              ] bothello_leaf_profile.sqlite[2/8] [===========53%              ] bothello_leaf_profile.sqlite[2/8] [============54%             ] bothello_leaf_profile.sqlite[2/8] [============55%             ] bothello_leaf_profile.sqlite[2/8] [============56%             ] bothello_leaf_profile.sqlite[2/8] [============57%             ] bothello_leaf_profile.sqlite[2/8] [=============58%            ] bothello_leaf_profile.sqlite[2/8] [=============59%            ] bothello_leaf_profile.sqlite[2/8] [=============60%            ] bothello_leaf_profile.sqlite[2/8] [==============61%           ] bothello_leaf_profile.sqlite[2/8] [==============62%           ] bothello_leaf_profile.sqlite[2/8] [==============63%           ] bothello_leaf_profile.sqlite[2/8] [==============64%           ] bothello_leaf_profile.sqlite[2/8] [===============65%          ] bothello_leaf_profile.sqlite[2/8] [===============66%          ] bothello_leaf_profile.sqlite[2/8] [===============67%          ] bothello_leaf_profile.sqlite[2/8] [================68%         ] bothello_leaf_profile.sqlite[2/8] [================69%         ] bothello_leaf_profile.sqlite[2/8] [================70%         ] bothello_leaf_profile.sqlite[2/8] [================71%         ] bothello_leaf_profile.sqlite[2/8] [=================72%        ] bothello_leaf_profile.sqlite[2/8] [=================73%        ] bothello_leaf_profile.sqlite[2/8] [=================74%        ] bothello_leaf_profile.sqlite[2/8] [==================75%       ] bothello_leaf_profile.sqlite[2/8] [==================76%       ] bothello_leaf_profile.sqlite[2/8] [==================77%       ] bothello_leaf_profile.sqlite[2/8] [==================78%       ] bothello_leaf_profile.sqlite[2/8] [===================79%      ] bothello_leaf_profile.sqlite[2/8] [===================80%      ] bothello_leaf_profile.sqlite[2/8] [===================81%      ] bothello_leaf_profile.sqlite[2/8] [===================82%      ] bothello_leaf_profile.sqlite[2/8] [====================83%     ] bothello_leaf_profile.sqlite[2/8] [====================84%     ] bothello_leaf_profile.sqlite[2/8] [====================85%     ] bothello_leaf_profile.sqlite[2/8] [=====================86%    ] bothello_leaf_profile.sqlite[2/8] [=====================87%    ] bothello_leaf_profile.sqlite[2/8] [=====================88%    ] bothello_leaf_profile.sqlite[2/8] [=====================89%    ] bothello_leaf_profile.sqlite[2/8] [======================90%   ] bothello_leaf_profile.sqlite[2/8] [======================91%   ] bothello_leaf_profile.sqlite[2/8] [======================92%   ] bothello_leaf_profile.sqlite[2/8] [=======================93%  ] bothello_leaf_profile.sqlite[2/8] [=======================94%  ] bothello_leaf_profile.sqlite[2/8] [=======================95%  ] bothello_leaf_profile.sqlite[2/8] [=======================96%  ] bothello_leaf_profile.sqlite[2/8] [========================97% ] bothello_leaf_profile.sqlite[2/8] [========================98% ] bothello_leaf_profile.sqlite[2/8] [========================99% ] bothello_leaf_profile.sqlite[2/8] [========================100%] bothello_leaf_profile.sqlite[2/8] [========================100%] bothello_leaf_profile.sqlite
+[3/8] Executing 'nvtx_sum' stats report
+
+ Time (%)  Total Time (ns)  Instances    Avg (ns)      Med (ns)     Min (ns)    Max (ns)   StdDev (ns)   Style       Range     
+ --------  ---------------  ---------  ------------  ------------  ----------  ----------  -----------  -------  --------------
+    100.0       5391116540          1  5391116540.0  5391116540.0  5391116540  5391116540          0.0  PushPop  :get_best_move
+
+[4/8] Executing 'osrt_sum' stats report
+
+ Time (%)  Total Time (ns)  Num Calls   Avg (ns)     Med (ns)    Min (ns)    Max (ns)   StdDev (ns)            Name         
+ --------  ---------------  ---------  -----------  -----------  ---------  ----------  ------------  ----------------------
+     61.5      14517326493        532   27288207.7   10081571.5       1955   265804737    36628980.4  poll                  
+     38.1       9000892327         11  818262938.8  500088990.0  500069641  4000027851  1055272038.6  pthread_cond_timedwait
+      0.3         71269402        456     156292.5       9736.5       1099     8648993      571262.6  ioctl                 
+      0.0          2705922         10     270592.2     189510.0      46333      683154      210684.7  sem_timedwait         
+      0.0          1343596         25      53743.8       4724.0       2772      930187      184031.8  mmap64                
+      0.0           343540          4      85885.0      75950.0      67570      124070       26143.4  pthread_create        
+      0.0           188318         26       7243.0       3308.5       1116       59888       11934.3  fopen                 
+      0.0           176511          1     176511.0     176511.0     176511      176511           0.0  pthread_cond_wait     
+      0.0           174001         43       4046.5       2547.0       1458       16658        3309.4  open64                
+      0.0           149237         13      11479.8       5953.0       2030       68412       17473.6  mmap                  
+      0.0           145661         14      10404.4       1541.0       1059      124019       32705.2  read                  
+      0.0           140751         21       6702.4       4398.0       1221       47854        9768.9  fclose                
+      0.0            70666         17       4156.8       1649.0       1280       27546        6686.8  write                 
+      0.0            33888          1      33888.0      33888.0      33888       33888           0.0  fgets                 
+      0.0            27164          2      13582.0      13582.0       7219       19945        8998.6  fread                 
+      0.0            23616          4       5904.0       5342.0       3694        9238        2480.0  munmap                
+      0.0            21574          6       3595.7       4035.5       1240        5643        1786.9  open                  
+      0.0            18104          7       2586.3       1618.0       1127        4616        1571.2  close                 
+      0.0            13638          4       3409.5       3119.0       1701        5699        1913.4  pipe2                 
+      0.0            11096          1      11096.0      11096.0      11096       11096           0.0  connect               
+      0.0            10002          2       5001.0       5001.0       3776        6226        1732.4  socket                
+      0.0             4692          2       2346.0       2346.0       1853        2839         697.2  fwrite                
+      0.0             4525          1       4525.0       4525.0       4525        4525           0.0  pthread_cond_broadcast
+      0.0             1268          1       1268.0       1268.0       1268        1268           0.0  bind                  
+      0.0             1257          1       1257.0       1257.0       1257        1257           0.0  fcntl                 
+
+[5/8] Executing 'cuda_api_sum' stats report
+
+ Time (%)  Total Time (ns)  Num Calls   Avg (ns)    Med (ns)   Min (ns)  Max (ns)  StdDev (ns)           Name         
+ --------  ---------------  ---------  ----------  ----------  --------  --------  -----------  ----------------------
+     98.1       4996484072        458  10909353.9  10803619.0   9700536  16866475     788446.2  cudaDeviceSynchronize 
+      1.7         87873536          2  43936768.0  43936768.0     66434  87807102   62042021.3  cudaMalloc            
+      0.1          4435821        458      9685.2      8054.0      7281     72818       6168.5  cudaMemcpy            
+      0.1          3052947        459      6651.3      3702.0      2940    824275      38476.4  cudaLaunchKernel      
+      0.0          1221408        458      2666.8      2174.5      1860     27921       1923.1  cudaMemset            
+      0.0           630008          1    630008.0    630008.0    630008    630008          0.0  cuLibraryLoadData     
+      0.0           265137          2    132568.5    132568.5    131206    133931       1926.9  cudaFree              
+      0.0            73668        459       160.5       128.0       109      1998        143.5  cuKernelGetName       
+      0.0             4760          1      4760.0      4760.0      4760      4760          0.0  cuModuleGetLoadingMode
+      0.0              962          2       481.0       481.0       469       493         17.0  cuLibraryGetKernel    
+
+[6/8] Executing 'cuda_gpu_kern_sum' stats report
+
+ Time (%)  Total Time (ns)  Instances   Avg (ns)    Med (ns)   Min (ns)  Max (ns)  StdDev (ns)                             Name                            
+ --------  ---------------  ---------  ----------  ----------  --------  --------  -----------  -----------------------------------------------------------
+    100.0       4993325122        458  10902456.6  10801067.5   9696210  14807612     759553.9  leaf_playout_kernel(Board, int, int *, curandStateXORWOW *)
+      0.0          2217874          1   2217874.0   2217874.0   2217874   2217874          0.0  setup_kernel(curandStateXORWOW *, unsigned long, int)      
+
+[7/8] Executing 'cuda_gpu_mem_time_sum' stats report
+
+ Time (%)  Total Time (ns)  Count  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)           Operation          
+ --------  ---------------  -----  --------  --------  --------  --------  -----------  ----------------------------
+     73.5           374498    458     817.7     800.0       768      1152         37.5  [CUDA memcpy Device-to-Host]
+     26.5           135328    458     295.5     288.0       256       928         33.5  [CUDA memset]               
+
+[8/8] Executing 'cuda_gpu_mem_size_sum' stats report
+
+ Total (MB)  Count  Avg (MB)  Med (MB)  Min (MB)  Max (MB)  StdDev (MB)           Operation          
+ ----------  -----  --------  --------  --------  --------  -----------  ----------------------------
+      0.002    458     0.000     0.000     0.000     0.000        0.000  [CUDA memcpy Device-to-Host]
+      0.002    458     0.000     0.000     0.000     0.000        0.000  [CUDA memset]               
+
+Generated:
+	/home/niccolo/Torino/GPU/bothello/profiling/nsys/bothello_leaf_profile.nsys-rep
+	/home/niccolo/Torino/GPU/bothello/profiling/nsys/bothello_leaf_profile.sqlite

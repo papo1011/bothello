@@ -1,0 +1,4 @@
+==PROF== Connected to process 36868 (/home/niccolo/Torino/GPU/bothello/build/bothello_tree_cuda)
+==PROF== Profiling "setup_rng_kernel" - 0 (1/1): 0%....50%....100% - 44 passes
+==PROF== Disconnected from process 36868
+==PROF== Report: /home/niccolo/Torino/GPU/bothello/profiling/ncu/bothello_tree_cuda_ncu_report.ncu-rep

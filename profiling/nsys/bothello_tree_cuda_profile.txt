@@ -1,0 +1,82 @@
+Collecting data...
+Generating '/tmp/nsys-report-e2d9.qdstrm'
+Press Ctrl-C to stop symbol files downloading
+[1/8] [0%                          ] bothello_tree_cuda_profile.nsys-rep[1/8] [0%                          ] bothello_tree_cuda_profile.nsys-rep[1/8] [===24%                      ] bothello_tree_cuda_profile.nsys-rep[1/8] [====25%                     ] bothello_tree_cuda_profile.nsys-rep[1/8] [=======38%                  ] bothello_tree_cuda_profile.nsys-rep[1/8] [===========52%              ] bothello_tree_cuda_profile.nsys-rep[1/8] [===========53%              ] bothello_tree_cuda_profile.nsys-rep[1/8] [============54%             ] bothello_tree_cuda_profile.nsys-rep[1/8] [============55%             ] bothello_tree_cuda_profile.nsys-rep[1/8] [============56%             ] bothello_tree_cuda_profile.nsys-rep[1/8] [===================79%      ] bothello_tree_cuda_profile.nsys-rep[1/8] [=====================89%    ] bothello_tree_cuda_profile.nsys-rep[1/8] [========================100%] bothello_tree_cuda_profile.nsys-rep[1/8] [========================100%] bothello_tree_cuda_profile.nsys-rep
+[2/8] [0%                          ] bothello_tree_cuda_profile.sqlite[2/8] [1%                          ] bothello_tree_cuda_profile.sqlite[2/8] [2%                          ] bothello_tree_cuda_profile.sqlite[2/8] [3%                          ] bothello_tree_cuda_profile.sqlite[2/8] [4%                          ] bothello_tree_cuda_profile.sqlite[2/8] [5%                          ] bothello_tree_cuda_profile.sqlite[2/8] [6%                          ] bothello_tree_cuda_profile.sqlite[2/8] [7%                          ] bothello_tree_cuda_profile.sqlite[2/8] [8%                          ] bothello_tree_cuda_profile.sqlite[2/8] [9%                          ] bothello_tree_cuda_profile.sqlite[2/8] [10%                         ] bothello_tree_cuda_profile.sqlite[2/8] [11%                         ] bothello_tree_cuda_profile.sqlite[2/8] [12%                         ] bothello_tree_cuda_profile.sqlite[2/8] [13%                         ] bothello_tree_cuda_profile.sqlite[2/8] [14%                         ] bothello_tree_cuda_profile.sqlite[2/8] [=15%                        ] bothello_tree_cuda_profile.sqlite[2/8] [=16%                        ] bothello_tree_cuda_profile.sqlite[2/8] [=17%                        ] bothello_tree_cuda_profile.sqlite[2/8] [==18%                       ] bothello_tree_cuda_profile.sqlite[2/8] [==19%                       ] bothello_tree_cuda_profile.sqlite[2/8] [==20%                       ] bothello_tree_cuda_profile.sqlite[2/8] [==21%                       ] bothello_tree_cuda_profile.sqlite[2/8] [===22%                      ] bothello_tree_cuda_profile.sqlite[2/8] [===23%                      ] bothello_tree_cuda_profile.sqlite[2/8] [===24%                      ] bothello_tree_cuda_profile.sqlite[2/8] [====25%                     ] bothello_tree_cuda_profile.sqlite[2/8] [====26%                     ] bothello_tree_cuda_profile.sqlite[2/8] [====27%                     ] bothello_tree_cuda_profile.sqlite[2/8] [====28%                     ] bothello_tree_cuda_profile.sqlite[2/8] [=====29%                    ] bothello_tree_cuda_profile.sqlite[2/8] [=====30%                    ] bothello_tree_cuda_profile.sqlite[2/8] [=====31%                    ] bothello_tree_cuda_profile.sqlite[2/8] [=====32%                    ] bothello_tree_cuda_profile.sqlite[2/8] [======33%                   ] bothello_tree_cuda_profile.sqlite[2/8] [======34%                   ] bothello_tree_cuda_profile.sqlite[2/8] [======35%                   ] bothello_tree_cuda_profile.sqlite[2/8] [=======36%                  ] bothello_tree_cuda_profile.sqlite[2/8] [=======37%                  ] bothello_tree_cuda_profile.sqlite[2/8] [=======38%                  ] bothello_tree_cuda_profile.sqlite[2/8] [=======39%                  ] bothello_tree_cuda_profile.sqlite[2/8] [========40%                 ] bothello_tree_cuda_profile.sqlite[2/8] [========41%                 ] bothello_tree_cuda_profile.sqlite[2/8] [========42%                 ] bothello_tree_cuda_profile.sqlite[2/8] [=========43%                ] bothello_tree_cuda_profile.sqlite[2/8] [=========44%                ] bothello_tree_cuda_profile.sqlite[2/8] [=========45%                ] bothello_tree_cuda_profile.sqlite[2/8] [=========46%                ] bothello_tree_cuda_profile.sqlite[2/8] [==========47%               ] bothello_tree_cuda_profile.sqlite[2/8] [==========48%               ] bothello_tree_cuda_profile.sqlite[2/8] [==========49%               ] bothello_tree_cuda_profile.sqlite[2/8] [===========50%              ] bothello_tree_cuda_profile.sqlite[2/8] [===========51%              ] bothello_tree_cuda_profile.sqlite[2/8] [===========52%              ] bothello_tree_cuda_profile.sqlite[2/8] [===========53%              ] bothello_tree_cuda_profile.sqlite[2/8] [============54%             ] bothello_tree_cuda_profile.sqlite[2/8] [============55%             ] bothello_tree_cuda_profile.sqlite[2/8] [============56%             ] bothello_tree_cuda_profile.sqlite[2/8] [============57%             ] bothello_tree_cuda_profile.sqlite[2/8] [=============58%            ] bothello_tree_cuda_profile.sqlite[2/8] [=============59%            ] bothello_tree_cuda_profile.sqlite[2/8] [=============60%            ] bothello_tree_cuda_profile.sqlite[2/8] [==============61%           ] bothello_tree_cuda_profile.sqlite[2/8] [==============62%           ] bothello_tree_cuda_profile.sqlite[2/8] [==============63%           ] bothello_tree_cuda_profile.sqlite[2/8] [==============64%           ] bothello_tree_cuda_profile.sqlite[2/8] [===============65%          ] bothello_tree_cuda_profile.sqlite[2/8] [===============66%          ] bothello_tree_cuda_profile.sqlite[2/8] [===============67%          ] bothello_tree_cuda_profile.sqlite[2/8] [================68%         ] bothello_tree_cuda_profile.sqlite[2/8] [================69%         ] bothello_tree_cuda_profile.sqlite[2/8] [================70%         ] bothello_tree_cuda_profile.sqlite[2/8] [================71%         ] bothello_tree_cuda_profile.sqlite[2/8] [=================72%        ] bothello_tree_cuda_profile.sqlite[2/8] [=================73%        ] bothello_tree_cuda_profile.sqlite[2/8] [=================74%        ] bothello_tree_cuda_profile.sqlite[2/8] [==================75%       ] bothello_tree_cuda_profile.sqlite[2/8] [==================76%       ] bothello_tree_cuda_profile.sqlite[2/8] [==================77%       ] bothello_tree_cuda_profile.sqlite[2/8] [==================78%       ] bothello_tree_cuda_profile.sqlite[2/8] [===================79%      ] bothello_tree_cuda_profile.sqlite[2/8] [===================80%      ] bothello_tree_cuda_profile.sqlite[2/8] [===================81%      ] bothello_tree_cuda_profile.sqlite[2/8] [===================82%      ] bothello_tree_cuda_profile.sqlite[2/8] [====================83%     ] bothello_tree_cuda_profile.sqlite[2/8] [====================84%     ] bothello_tree_cuda_profile.sqlite[2/8] [====================85%     ] bothello_tree_cuda_profile.sqlite[2/8] [=====================86%    ] bothello_tree_cuda_profile.sqlite[2/8] [=====================87%    ] bothello_tree_cuda_profile.sqlite[2/8] [=====================88%    ] bothello_tree_cuda_profile.sqlite[2/8] [=====================89%    ] bothello_tree_cuda_profile.sqlite[2/8] [======================90%   ] bothello_tree_cuda_profile.sqlite[2/8] [======================91%   ] bothello_tree_cuda_profile.sqlite[2/8] [======================92%   ] bothello_tree_cuda_profile.sqlite[2/8] [=======================93%  ] bothello_tree_cuda_profile.sqlite[2/8] [=======================94%  ] bothello_tree_cuda_profile.sqlite[2/8] [=======================95%  ] bothello_tree_cuda_profile.sqlite[2/8] [=======================96%  ] bothello_tree_cuda_profile.sqlite[2/8] [========================97% ] bothello_tree_cuda_profile.sqlite[2/8] [========================98% ] bothello_tree_cuda_profile.sqlite[2/8] [========================99% ] bothello_tree_cuda_profile.sqlite[2/8] [========================100%] bothello_tree_cuda_profile.sqlite[2/8] [========================100%] bothello_tree_cuda_profile.sqlite
+[3/8] Executing 'nvtx_sum' stats report
+
+ Time (%)  Total Time (ns)  Instances    Avg (ns)      Med (ns)     Min (ns)    Max (ns)   StdDev (ns)   Style       Range     
+ --------  ---------------  ---------  ------------  ------------  ----------  ----------  -----------  -------  --------------
+    100.0       5386746009          1  5386746009.0  5386746009.0  5386746009  5386746009          0.0  PushPop  :get_best_move
+
+[4/8] Executing 'osrt_sum' stats report
+
+ Time (%)  Total Time (ns)  Num Calls   Avg (ns)     Med (ns)    Min (ns)    Max (ns)   StdDev (ns)            Name         
+ --------  ---------------  ---------  -----------  -----------  ---------  ----------  ------------  ----------------------
+     50.8      14518478910        532   27290373.9   10081847.5       1334   265185223    36624859.7  poll                  
+     31.5       9001828625         11  818348056.8  500139927.0  500075763  4000080880  1055261406.8  pthread_cond_timedwait
+     17.5       5003255360        496   10087208.4   10070188.0   10023994    10603781       44099.3  nanosleep             
+      0.2         65431836        464     141016.9       9635.5       1020     5970476      387502.8  ioctl                 
+      0.0          2619766         10     261976.6     140896.5     108959      982617      282727.2  sem_timedwait         
+      0.0          1299269         25      51970.8       6414.0       2800      906903      179536.2  mmap64                
+      0.0           567273         16      35454.6       6685.0       1346      394803       97280.7  mmap                  
+      0.0           328269          4      82067.3      86010.0      49768      106481       23975.3  pthread_create        
+      0.0           280757          1     280757.0     280757.0     280757      280757           0.0  pthread_cond_wait     
+      0.0           194763         27       7213.4       2765.0       1008       68931       13394.4  fopen                 
+      0.0           171695         43       3992.9       2364.0       1443       11100        2956.3  open64                
+      0.0           107492         21       5118.7       4481.0       1156       14226        3243.9  fclose                
+      0.0           101982         17       5998.9       2160.0       1379       38925       10194.7  write                 
+      0.0            40233          6       6705.5       5885.0       3054       15130        4349.2  munmap                
+      0.0            33881          1      33881.0      33881.0      33881       33881           0.0  fgets                 
+      0.0            21593          6       3598.8       4124.0       1169        5383        1688.8  open                  
+      0.0            19942          2       9971.0       9971.0       6251       13691        5260.9  fread                 
+      0.0            16317         12       1359.8       1100.5       1020        2742         587.8  read                  
+      0.0            15883          6       2647.2       2367.0       1220        4405        1513.5  close                 
+      0.0            13077          4       3269.3       3414.0       1392        4857        1533.0  pipe2                 
+      0.0            10445          1      10445.0      10445.0      10445       10445           0.0  connect               
+      0.0             8154          2       4077.0       4077.0       3944        4210         188.1  socket                
+      0.0             4174          2       2087.0       2087.0       1713        2461         528.9  fwrite                
+      0.0             1543          1       1543.0       1543.0       1543        1543           0.0  pthread_cond_broadcast
+      0.0             1318          1       1318.0       1318.0       1318        1318           0.0  bind                  
+      0.0             1264          1       1264.0       1264.0       1264        1264           0.0  fcntl                 
+
+[5/8] Executing 'cuda_api_sum' stats report
+
+ Time (%)  Total Time (ns)  Num Calls   Avg (ns)   Med (ns)   Min (ns)  Max (ns)  StdDev (ns)           Name         
+ --------  ---------------  ---------  ----------  ---------  --------  --------  -----------  ----------------------
+     91.0         80129956          3  26709985.3    53515.0      6623  80069818   46210976.6  cudaMalloc            
+      3.3          2880015          2   1440007.5  1440007.5    305272   2574743    1604758.3  cudaDeviceSynchronize 
+      1.5          1325569          3    441856.3   263057.0     12943   1049569     540948.5  cudaFree              
+      1.3          1115399          1   1115399.0  1115399.0   1115399   1115399          0.0  cudaFreeHost          
+      1.1           953708          2    476854.0   476854.0     69578    884130     575975.2  cudaLaunchKernel      
+      0.8           731233          1    731233.0   731233.0    731233    731233          0.0  cudaHostAlloc         
+      0.8           709306          1    709306.0   709306.0    709306    709306          0.0  cuLibraryLoadData     
+      0.2           161097          7     23013.9    10680.0      3931     96045      32426.9  cudaMemcpy            
+      0.0             4269          1      4269.0     4269.0      4269      4269          0.0  cuModuleGetLoadingMode
+      0.0             1062          2       531.0      531.0       441       621        127.3  cuLibraryGetKernel    
+      0.0              828          2       414.0      414.0       277       551        193.7  cuKernelGetName       
+
+[6/8] Executing 'cuda_gpu_kern_sum' stats report
+
+ Time (%)  Total Time (ns)  Instances    Avg (ns)      Med (ns)     Min (ns)    Max (ns)   StdDev (ns)                                              Name                                            
+ --------  ---------------  ---------  ------------  ------------  ----------  ----------  -----------  --------------------------------------------------------------------------------------------
+    100.0       5009926180          1  5009926180.0  5009926180.0  5009926180  5009926180          0.0  mcts_kernel(GpuNode *, int *, int, curandStateXORWOW *, volatile int *, double, Board, bool)
+      0.0           308130          1      308130.0      308130.0      308130      308130          0.0  setup_rng_kernel(curandStateXORWOW *, unsigned long, int)                                   
+
+[7/8] Executing 'cuda_gpu_mem_time_sum' stats report
+
+ Time (%)  Total Time (ns)  Count  Avg (ns)  Med (ns)  Min (ns)  Max (ns)  StdDev (ns)           Operation          
+ --------  ---------------  -----  --------  --------  --------  --------  -----------  ----------------------------
+     83.5             4384      5     876.8     832.0       832      1056        100.2  [CUDA memcpy Device-to-Host]
+     16.5              864      2     432.0     432.0       352       512        113.1  [CUDA memcpy Host-to-Device]
+
+[8/8] Executing 'cuda_gpu_mem_size_sum' stats report
+
+ Total (MB)  Count  Avg (MB)  Med (MB)  Min (MB)  Max (MB)  StdDev (MB)           Operation          
+ ----------  -----  --------  --------  --------  --------  -----------  ----------------------------
+      0.000      5     0.000     0.000     0.000     0.000        0.000  [CUDA memcpy Device-to-Host]
+      0.000      2     0.000     0.000     0.000     0.000        0.000  [CUDA memcpy Host-to-Device]
+
+Generated:
+	/home/niccolo/Torino/GPU/bothello/profiling/nsys/bothello_tree_cuda_profile.nsys-rep
+	/home/niccolo/Torino/GPU/bothello/profiling/nsys/bothello_tree_cuda_profile.sqlite

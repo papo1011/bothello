@@ -154,31 +154,33 @@ Node *tree_policy(Node *node)
 }
 
 // Backpropagate batch simulation results up the tree
-// Unlike standard MCTS (1 simulation per iteration), we ran n_sims parallel simulations
 // Uses iterative approach to prevent stack overflow in deep trees
-void backpropagate_leaf_parallel(Node *node, double avg_result, int n_sims)
+void backpropagate_leaf_parallel(Node *node, double avg_result, int n_sims, bool root_is_black)
 {
-    // Iterative backpropagation (more stack-safe than recursion)
     Node *current = node;
     while (current != nullptr) {
-        // avg_result is the fraction of simulations won by Black (0.0 to 1.0)
-        double batch_wins = avg_result * n_sims; // Total Black wins in the batch
-
-        // Update visits (atomic int)
+        double batch_wins = avg_result * n_sims; // Total Black wins from simulations
         current->visits.fetch_add(n_sims);
 
-        // Update wins (atomic double - requires compare-exchange loop)
-        double wins_to_add;
-        if (current->player_moved_to_create_node == 0) {
-            wins_to_add = batch_wins;
+        // Map player_moved_to_create_node to actual color based on root's color
+        // Root always has value=1, children alternate 0/1
+        bool black_moved_to_create_this_node;
+        if (root_is_black) {
+            // Root=Black's turn with value=1 means White moved to create it
+            // So value=0 means Black moved, value=1 means White moved
+            black_moved_to_create_this_node = (current->player_moved_to_create_node == 0);
         } else {
-            wins_to_add = n_sims - batch_wins;
+            // Root=White's turn with value=1 means Black moved to create it
+            // So value=1 means Black moved, value=0 means White moved
+            black_moved_to_create_this_node = (current->player_moved_to_create_node == 1);
         }
 
-        // Compare-and-swap loop for atomic double
+        // Credit wins to the player who moved to create this node
+        double wins_to_add = black_moved_to_create_this_node ? batch_wins : (n_sims - batch_wins);
+
+        // Atomic update
         double old_wins = current->wins.load();
         while (!current->wins.compare_exchange_weak(old_wins, old_wins + wins_to_add)) {
-            // Loop continues until successful update
         }
 
         current = current->parent;
@@ -219,15 +221,11 @@ Move MCTSLeafParallel::get_best_move(Board const &state)
         // 1. Selection & Expansion: Navigate to a leaf node
         Node *leaf_node = tree_policy(&root);
 
-        // 2. Simulation: Run LEAF_SIMULATIONS parallel GPU playouts from this leaf
-        // Convert node state to Board for GPU execution
-        // Node->player_moved_to_create_node indicates who moved to reach this state:
-        //   0 = Black moved to create node -> current turn is White
-        //   1 = White moved to create node -> current turn is Black
-        bool is_black_turn = (leaf_node->player_moved_to_create_node == 1);
-
+        // 2. Simulation: Run parallel GPU playouts from this leaf
+        // Board auto-flips after every move, so use node's actual state directly
         Board leaf_state(leaf_node->state.get_curr_player_mask(),
-                         leaf_node->state.get_opp_player_mask(), is_black_turn);
+                         leaf_node->state.get_opp_player_mask(),
+                         leaf_node->state.is_black_turn());
 
         // Number of parallel simulations per leaf
         int n_sims = gpu_config::LEAF_SIMULATIONS;
@@ -244,7 +242,8 @@ Move MCTSLeafParallel::get_best_move(Board const &state)
         double avg_result = (double)total_black_wins / n_sims;
 
         // 3. Backpropagation: Update tree with batch results
-        backpropagate_leaf_parallel(leaf_node, avg_result, n_sims);
+        bool root_is_black = root.state.is_black_turn();
+        backpropagate_leaf_parallel(leaf_node, avg_result, n_sims, root_is_black);
 
         last_executed_iterations++;
         total_leaves_evaluated++;
